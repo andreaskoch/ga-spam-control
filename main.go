@@ -63,7 +63,7 @@ func main() {
 	// authorized and authenticated by the retrieved token.
 	code := <-codeReceiver
 	if len(code) == 0 {
-		fmt.Fatal("No authorization code received.")
+		log.Fatal("No authorization code received.")
 	}
 
 	log.Printf("Authorization code received: %s\n", code)
