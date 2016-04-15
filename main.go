@@ -3,18 +3,44 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"golang.org/x/oauth2"
 )
 
+func receiveAuthorizationCode() (string, chan string) {
+
+	authorizationCode := make(chan string, 1)
+	listenAddress := "localhost:8080"
+	route := "/authorizationCodeReceiver"
+	go func() {
+		http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
+			code := r.URL.Query().Get("code")
+			if len(code) > 0 {
+				fmt.Fprintf(w, "%s", code)
+				authorizationCode <- code
+				return
+				// panic(fmt.Sprintf("Code received: %s", code))
+			}
+
+			fmt.Fprintf(w, "No code received")
+		})
+
+		log.Fatal(http.ListenAndServe(listenAddress, nil))
+	}()
+
+	return fmt.Sprintf("http://%s%s", listenAddress, route), authorizationCode
+}
+
 func main() {
 
 	accountId := "578578"
+	redirectURL, codeReceiver := receiveAuthorizationCode()
 
 	conf := &oauth2.Config{
 		ClientID:     "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com",
 		ClientSecret: "_WxLj0SpQ8HxqmOEyYDUTFzW",
-		RedirectURL:  "http://localhost:8080",
+		RedirectURL:  redirectURL,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/analytics.edit",
 			"https://www.googleapis.com/auth/analytics.readonly",
@@ -35,11 +61,13 @@ func main() {
 	// NewTransportWithCode will do the handshake to retrieve
 	// an access token and initiate a Transport that is
 	// authorized and authenticated by the retrieved token.
-	var code string
-	if _, err := fmt.Scan(&code); err != nil {
-		log.Fatal(err)
-
+	code := <-codeReceiver
+	if len(code) == 0 {
+		fmt.Fatal("No authorization code received.")
 	}
+
+	log.Printf("Authorization code received: %s\n", code)
+
 	tok, err := conf.Exchange(oauth2.NoContext, code)
 	if err != nil {
 		log.Fatal(err)
