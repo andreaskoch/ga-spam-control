@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
+	"github.com/etix/stoppableListener"
 	"golang.org/x/oauth2"
 )
 
@@ -14,19 +16,27 @@ func receiveAuthorizationCode() (string, chan string) {
 	listenAddress := "localhost:8080"
 	route := "/authorizationCodeReceiver"
 	go func() {
+
+		listener, err := net.Listen("tcp", listenAddress)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		handler := stoppableListener.Handle(listener)
+
 		http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 			code := r.URL.Query().Get("code")
 			if len(code) > 0 {
 				fmt.Fprintf(w, "%s", code)
 				authorizationCode <- code
-				return
-				// panic(fmt.Sprintf("Code received: %s", code))
+
+				handler.Stop <- true
 			}
 
 			fmt.Fprintf(w, "No code received")
 		})
 
-		log.Fatal(http.ListenAndServe(listenAddress, nil))
+		http.Serve(handler, nil)
 	}()
 
 	return fmt.Sprintf("http://%s%s", listenAddress, route), authorizationCode
