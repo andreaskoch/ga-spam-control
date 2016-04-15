@@ -10,6 +10,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// GoogleAnalyticsClientID contains the client ID of the Google API credentials (see: https://console.developers.google.com/apis/credentials)
+const GoogleAnalyticsClientID = "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com"
+
+// GoogleAnalyticsClientSecret contains the client secret of the Google API credentials (see: https://console.developers.google.com/apis/credentials)
+const GoogleAnalyticsClientSecret = "_WxLj0SpQ8HxqmOEyYDUTFzW"
+
+// receiveAuthorizationCode return a redirect URL and a channel which
+// receives the Google oAuth authorization code once the user has
+// authorized the operation.
 func receiveAuthorizationCode() (string, chan string) {
 
 	authorizationCode := make(chan string, 1)
@@ -42,14 +51,13 @@ func receiveAuthorizationCode() (string, chan string) {
 	return fmt.Sprintf("http://%s%s", listenAddress, route), authorizationCode
 }
 
-func main() {
-
-	accountId := "578578"
+// getAnalyticsClient returns a Google Analytics client instance.
+func getAnalyticsClient() *http.Client {
 	redirectURL, codeReceiver := receiveAuthorizationCode()
 
 	conf := &oauth2.Config{
-		ClientID:     "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com",
-		ClientSecret: "_WxLj0SpQ8HxqmOEyYDUTFzW",
+		ClientID:     GoogleAnalyticsClientID,
+		ClientSecret: GoogleAnalyticsClientSecret,
 		RedirectURL:  redirectURL,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/analytics.edit",
@@ -84,6 +92,14 @@ func main() {
 	}
 
 	client := conf.Client(oauth2.NoContext, tok)
+	return client
+}
+
+func main() {
+
+	client := getAnalyticsClient()
+
+	accountId := "578578"
 	// uri := fmt.Sprintf("https://www.googleapis.com/analytics/v3/management/accounts/%s/filters", accountId)
 	uri := fmt.Sprintf("https://www-googleapis-com-yb0hxtzk6st4.runscope.net/analytics/v3/management/accounts/%s/filters", accountId)
 	response, err := client.Get(uri)
