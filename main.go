@@ -10,6 +10,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// GoogleAnalyticsHostname contains the hostname of the Google Analytics API
+// const GoogleAnalyticsHostname = "www.googleapis.com"
+const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
+
 // GoogleAnalyticsClientID contains the client ID of the Google API credentials (see: https://console.developers.google.com/apis/credentials)
 const GoogleAnalyticsClientID = "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com"
 
@@ -40,6 +44,7 @@ func receiveAuthorizationCode() (string, chan string) {
 				authorizationCode <- code
 
 				handler.Stop <- true
+				return
 			}
 
 			fmt.Fprintf(w, "No code received")
@@ -60,6 +65,7 @@ func getAnalyticsClient() *http.Client {
 		ClientSecret: GoogleAnalyticsClientSecret,
 		RedirectURL:  redirectURL,
 		Scopes: []string{
+			"https://www.googleapis.com/auth/analytics",
 			"https://www.googleapis.com/auth/analytics.edit",
 			"https://www.googleapis.com/auth/analytics.readonly",
 		},
@@ -98,14 +104,34 @@ func getAnalyticsClient() *http.Client {
 func main() {
 
 	client := getAnalyticsClient()
+	getAccounts(client)
 
 	accountId := "578578"
-	// uri := fmt.Sprintf("https://www.googleapis.com/analytics/v3/management/accounts/%s/filters", accountId)
-	uri := fmt.Sprintf("https://www-googleapis-com-yb0hxtzk6st4.runscope.net/analytics/v3/management/accounts/%s/filters", accountId)
-	response, err := client.Get(uri)
+	getFilters(client, accountId)
+}
+
+// getAccounts returns all accessible accounts.
+func getAccounts(apiClient *http.Client) error {
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts", GoogleAnalyticsHostname)
+	response, err := apiClient.Get(uri)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	fmt.Println(response)
+	return nil
+}
+
+// getFilters returns all filters for the account with the given account ID.
+func getFilters(apiClient *http.Client, accountId string) error {
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", GoogleAnalyticsHostname, accountId)
+	response, err := apiClient.Get(uri)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(response)
+	return nil
 }
