@@ -32,5 +32,8 @@ ga-spam-control remove
 ## Related Resources
 
 - [Referer spam](https://en.wikipedia.org/wiki/Referer_spam)
+- [List of spam domains](https://github.com/ddofborg/analytics-ghost-spam-list)
+- [Online Tool: Analytics Referrer/Ghost Spam Blocker](https://www.adwordsrobot.com/en/tools/ga-referrer-spam-killer)
 - [Google Analytics Account API](https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/accounts/list)
 - [Google Analytics Filter API](https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/filters)
+- [Google Analytics Filter Expressions](https://developers.google.com/analytics/devguides/reporting/core/v3/reference#filters)
