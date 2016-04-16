@@ -10,10 +10,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// GoogleAnalyticsHostname contains the hostname of the Google Analytics API
-// const GoogleAnalyticsHostname = "www.googleapis.com"
-const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
-
 // getAnalyticsClientConfig returns the oAuth client configuration for the Google Analytics API.
 func getAnalyticsClientConfig(clientId, clientSecret, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
@@ -80,39 +76,30 @@ func receiveAuthorizationCode(conf *oauth2.Config, listenAddress, route string) 
 }
 
 // getAnalyticsClient returns a Google Analytics client instance.
-func getAnalyticsClient(oAuthClientConfig *oauth2.Config, listenAddress, route string) *http.Client {
+func getAnalyticsClient(store tokenStore, oAuthClientConfig *oauth2.Config, listenAddress, route string) (*http.Client, error) {
 	code, err := receiveAuthorizationCode(oAuthClientConfig, listenAddress, route)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	tok, err := oAuthClientConfig.Exchange(oauth2.NoContext, code)
-	if err != nil {
-		log.Fatal(err)
+	// fetch token from store
+	exchangeToken, tokenStoreError := store.GetToken()
+	if tokenStoreError != nil {
+
+		// request a new token
+		newToken, requestTokenError := oAuthClientConfig.Exchange(oauth2.NoContext, code)
+		if requestTokenError != nil {
+			return nil, err
+		}
+
+		// save token to store
+		store.SaveToken(*newToken)
+
+		exchangeToken = *newToken
 	}
 
-	client := oAuthClientConfig.Client(oauth2.NoContext, tok)
-	return client
-}
-
-func main() {
-
-	// credentials
-	googleAnalyticsClientID := "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com"
-	googleAnalyticsClientSecret := "_WxLj0SpQ8HxqmOEyYDUTFzW"
-
-	// oAuth code receiver
-	listenAddress := "localhost:8080"
-	route := "/authorizationCodeReceiver"
-	redirectURL := fmt.Sprintf("http://%s%s", listenAddress, route)
-
-	// oAuth client config
-	oAuthClientConfig := getAnalyticsClientConfig(googleAnalyticsClientID, googleAnalyticsClientSecret, redirectURL)
-	client := getAnalyticsClient(oAuthClientConfig, listenAddress, route)
-	getAccounts(client)
-
-	accountId := "578578"
-	getFilters(client, accountId)
+	client := oAuthClientConfig.Client(oauth2.NoContext, &exchangeToken)
+	return client, nil
 }
 
 // getAccounts returns all accessible accounts.
