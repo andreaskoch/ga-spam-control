@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"fmt"
@@ -24,7 +24,10 @@ func main() {
 	// create a new analytis API instance
 	googleAnalyticsClientID := "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com"
 	googleAnalyticsClientSecret := "_WxLj0SpQ8HxqmOEyYDUTFzW"
-	analyticsAPI := api.New(tokenStore, googleAnalyticsClientID, googleAnalyticsClientSecret)
+	analyticsAPI, apiError := api.New(tokenStore, googleAnalyticsClientID, googleAnalyticsClientSecret)
+	if apiError != nil {
+		log.Fatal(apiError)
+	}
 
 	// get all available accounts
 	accounts, accountsError := analyticsAPI.GetAccounts()

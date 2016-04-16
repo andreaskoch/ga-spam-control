@@ -3,16 +3,34 @@ package apiservice
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 )
 
 // GoogleAnalyticsHostname contains the hostname of the Google Analytics API
 // const GoogleAnalyticsHostname = "www.googleapis.com"
 const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
 
-func New() *GoogleAnalytics {
+func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (*GoogleAnalytics, error) {
+
+	// oAuth code receiver
+	listenAddress := "localhost:8080"
+	route := "/authorizationCodeReceiver"
+	redirectURL := fmt.Sprintf("http://%s%s", listenAddress, route)
+
+	// oAuth client config
+	oAuthClientConfig := getAnalyticsClientConfig(clientID, clientSecret, redirectURL)
+
+	// instantiate a Google Analytics client
+	client, err := getAnalyticsClient(tokenStore, oAuthClientConfig, listenAddress, route)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GoogleAnalytics{
 		apiHostname: GoogleAnalyticsHostname,
-	}
+		client:      client,
+	}, nil
 }
 
 type GoogleAnalytics struct {
@@ -47,6 +65,11 @@ func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 		return nil, err
 	}
 
-	fmt.Println(response)
-	return nil, nil
+	serializer := &filterResultsSerializer{}
+	results, deserializeError := serializer.Deserialize(response.Body)
+	if deserializeError != nil {
+		return nil, deserializeError
+	}
+
+	return results.Items, nil
 }

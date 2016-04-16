@@ -1,5 +1,7 @@
 package apimodel
 
 type Filter struct {
-	ID string
+	ID   string
+	Name string
+	Type string
 }
