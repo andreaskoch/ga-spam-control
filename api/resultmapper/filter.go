@@ -18,8 +18,18 @@ func MapFilters(sources []apiservice.Filter) []apimodel.Filter {
 // MapFilter converts a apiservice.Filter model into a apimodel.Filter model.
 func MapFilter(source apiservice.Filter) apimodel.Filter {
 	return apimodel.Filter{
-		ID:   source.ID,
-		Name: source.Name,
-		Type: source.Type,
+		AccountID: source.AccountID,
+		ID:        source.ID,
+		Name:      source.Name,
+		Kind:      source.Kind,
+		Type:      source.Type,
+		Link:      source.SelfLink,
+		ExcludeDetails: apimodel.FilterDetail{
+			Kind:            source.ExcludeDetails.Kind,
+			Field:           source.ExcludeDetails.Field,
+			MatchType:       source.ExcludeDetails.MatchType,
+			ExpressionValue: source.ExcludeDetails.ExpressionValue,
+			CaseSensitive:   source.ExcludeDetails.CaseSensitive,
+		},
 	}
 }

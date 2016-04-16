@@ -18,6 +18,10 @@ func MapAccounts(sources []apiservice.Account) []apimodel.Account {
 // MapAccount converts a apiservice.Account model into a apimodel.Account model.
 func MapAccount(source apiservice.Account) apimodel.Account {
 	return apimodel.Account{
-		ID: source.ID,
+		ID:   source.ID,
+		Name: source.Name,
+		Kind: source.Kind,
+		Type: source.Type,
+		Link: source.SelfLink,
 	}
 }
