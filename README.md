@@ -1,4 +1,4 @@
-# Google Analytics Spam Filter Manager
+# Google Analytics Spam Control
 
 Commandline utility for managing Google Analytics referrer SPAM filters for all your accounts
 

@@ -1,4 +1,4 @@
-package main
+package apiservice
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 	"github.com/etix/stoppableListener"
 	"golang.org/x/oauth2"
 )
@@ -76,7 +77,7 @@ func receiveAuthorizationCode(conf *oauth2.Config, listenAddress, route string) 
 }
 
 // getAnalyticsClient returns a Google Analytics client instance.
-func getAnalyticsClient(store tokenStore, oAuthClientConfig *oauth2.Config, listenAddress, route string) (*http.Client, error) {
+func getAnalyticsClient(store apicredentials.TokenStorer, oAuthClientConfig *oauth2.Config, listenAddress, route string) (*http.Client, error) {
 
 	// fetch token from store
 	exchangeToken, tokenStoreError := store.GetToken()
