@@ -107,12 +107,21 @@ func getAnalyticsClient(store tokenStore, oAuthClientConfig *oauth2.Config, list
 func getAccounts(apiClient *http.Client) error {
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts", GoogleAnalyticsHostname)
-	response, err := apiClient.Get(uri)
-	if err != nil {
-		return err
+	response, apiError := apiClient.Get(uri)
+	if apiError != nil {
+		return apiError
 	}
 
-	fmt.Println(response)
+	serializer := &accountResultsSerializer{}
+	results, deserializeError := serializer.Deserialize(response.Body)
+	if deserializeError != nil {
+		return deserializeError
+	}
+
+	for _, account := range results.Items {
+		log.Println("Account ID: ", account.ID)
+	}
+
 	return nil
 }
 
