@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(fmt.Sprintf("Cannot determine the current users home direcotry. Error: %s", err))
 	}
 
-	tokenStoreFilePath := filepath.Join(homeDirPath, ".sdasds")
+	tokenStoreFilePath := filepath.Join(homeDirPath, ".analytics")
 	store := newTokenStore(tokenStoreFilePath)
 
 	// credentials

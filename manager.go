@@ -77,14 +77,15 @@ func receiveAuthorizationCode(conf *oauth2.Config, listenAddress, route string) 
 
 // getAnalyticsClient returns a Google Analytics client instance.
 func getAnalyticsClient(store tokenStore, oAuthClientConfig *oauth2.Config, listenAddress, route string) (*http.Client, error) {
-	code, err := receiveAuthorizationCode(oAuthClientConfig, listenAddress, route)
-	if err != nil {
-		return nil, err
-	}
 
 	// fetch token from store
 	exchangeToken, tokenStoreError := store.GetToken()
 	if tokenStoreError != nil {
+
+		code, err := receiveAuthorizationCode(oAuthClientConfig, listenAddress, route)
+		if err != nil {
+			return nil, err
+		}
 
 		// request a new token
 		newToken, requestTokenError := oAuthClientConfig.Exchange(oauth2.NoContext, code)
@@ -93,12 +94,12 @@ func getAnalyticsClient(store tokenStore, oAuthClientConfig *oauth2.Config, list
 		}
 
 		// save token to store
-		store.SaveToken(*newToken)
+		store.SaveToken(newToken)
 
-		exchangeToken = *newToken
+		exchangeToken = newToken
 	}
 
-	client := oAuthClientConfig.Client(oauth2.NoContext, &exchangeToken)
+	client := oAuthClientConfig.Client(oauth2.NoContext, exchangeToken)
 	return client, nil
 }
 
