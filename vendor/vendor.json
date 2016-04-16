@@ -1,0 +1,37 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "BtXBOk/77S73nyXcuQyQpSu0r4c=",
+			"path": "github.com/etix/stoppableListener",
+			"revision": "0346fe88acd7ec2c93cc77641624f51c1dd52d93",
+			"revisionTime": "2013-10-17T13:36:10Z"
+		},
+		{
+			"checksumSHA1": "z235fRXw4+SW4xWgLTYc8SwkM2M=",
+			"path": "github.com/mitchellh/go-homedir",
+			"revision": "d682a8f0cf139663a984ff12528da460ca963de9",
+			"revisionTime": "2015-10-25T05:24:27Z"
+		},
+		{
+			"checksumSHA1": "pancewZW3HwGvpDwfH5Imrbadc4=",
+			"path": "golang.org/x/net/context",
+			"revision": "fb93926129b8ec0056f2f458b1f519654814edf0",
+			"revisionTime": "2016-04-12T22:48:50Z"
+		},
+		{
+			"checksumSHA1": "mktBVED98G2vv+OKcSgtnFVZC1Y=",
+			"path": "golang.org/x/oauth2",
+			"revision": "b0e2337fe6ec0c637fa4f123268b972f334504eb",
+			"revisionTime": "2016-04-08T01:06:28Z"
+		},
+		{
+			"checksumSHA1": "W/GiDqzsagBnR7/yEvxatMhUDBs=",
+			"path": "golang.org/x/oauth2/internal",
+			"revision": "b0e2337fe6ec0c637fa4f123268b972f334504eb",
+			"revisionTime": "2016-04-08T01:06:28Z"
+		}
+	],
+	"rootPath": "github.com/andreaskoch/ga-spam-control"
+}
