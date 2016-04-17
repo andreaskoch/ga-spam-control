@@ -108,7 +108,7 @@ type spamControl struct {
 
 // Update the spam control filters.
 func (cli *spamControl) Update() error {
-	return fmt.Errorf("No implemented")
+	return cli.analyticsAPI.CreateFilter("578578")
 }
 
 // Remove all spam control filters.

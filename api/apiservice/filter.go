@@ -24,6 +24,25 @@ func (filterResultsSerializer) Deserialize(reader io.Reader) (*FilterResults, er
 	return filterResults, err
 }
 
+type filterSerializer struct{}
+
+func (filterSerializer) Serialize(writer io.Writer, filter *Filter) error {
+	bytes, err := json.MarshalIndent(filter, "", "\t")
+	if err != nil {
+		return err
+	}
+
+	writer.Write(bytes)
+	return nil
+}
+
+func (filterSerializer) Deserialize(reader io.Reader) (*Filter, error) {
+	decoder := json.NewDecoder(reader)
+	var filter *Filter
+	err := decoder.Decode(&filter)
+	return filter, err
+}
+
 type FilterResults struct {
 	Results
 	Items []Filter `json:"items"`

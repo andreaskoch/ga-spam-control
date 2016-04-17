@@ -1,6 +1,7 @@
 package apiservice
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
@@ -72,4 +73,32 @@ func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 	}
 
 	return results.Items, nil
+}
+
+// CreateFilter creates a new filter for the given account ID.
+func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) error {
+
+	buffer := new(bytes.Buffer)
+	serializer := &filterSerializer{}
+	serializeError := serializer.Serialize(buffer, &filter)
+	if serializeError != nil {
+		return serializeError
+	}
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
+	response, err := service.client.Post(uri, "application/json; charset=UTF-8", buffer)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != 200 {
+		errorResponse, decodeError := decodeResponse(response.Body)
+		if decodeError != nil {
+			return decodeError
+		}
+
+		return fmt.Errorf("%s", errorResponse.Error.Message)
+	}
+
+	return nil
 }
