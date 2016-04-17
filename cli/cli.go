@@ -3,14 +3,19 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/andreaskoch/ga-spam-control/api"
 	"github.com/andreaskoch/ga-spam-control/cli/credentials"
 	"github.com/mitchellh/go-homedir"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
+
+	app := kingpin.New("ga-spam-control", "Command-line utility for blocking referer spam from your Google Analytics accounts")
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// create a token store
 	homeDirPath, err := homedir.Dir()

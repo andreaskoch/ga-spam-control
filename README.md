@@ -1,6 +1,6 @@
 # Google Analytics Spam Control
 
-Command-line utility for blocking all referer spam from your Google Analytics accounts
+Command-line utility for blocking referer spam from your Google Analytics accounts
 
 Google Analytics [referer spam](https://en.wikipedia.org/wiki/Referer_spam) is pain.
 **ga-spam-control** is a small command-line utility that helps you to keep your Google Analtics spam filters up-to-date.
