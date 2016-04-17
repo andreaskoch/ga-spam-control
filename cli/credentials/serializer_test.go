@@ -129,6 +129,6 @@ func Test_Deserialize_ValidJSON_TokenIsReturned(t *testing.T) {
 	// assert
 	if token.AccessToken != "daskdlöasdksalökdlöasklökAccessToken" {
 		t.Fail()
-		t.Logf("Deserialize returned an error: %s", err.Error())
+		t.Logf("Deserialize the wrong token")
 	}
 }
