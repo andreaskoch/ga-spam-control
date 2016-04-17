@@ -2,22 +2,23 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/andreaskoch/ga-spam-control/api"
-	"github.com/andreaskoch/ga-spam-control/cli/credentials"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol"
 	"github.com/mitchellh/go-homedir"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
-	cli(os.Args[1:])
+	handleCommandlineArguments(os.Args[1:])
 }
 
-func cli(args []string) {
+// handleCommandlineArguments parses the given arguments
+// and performs the selected action.
+func handleCommandlineArguments(args []string) {
 	app := kingpin.New("ga-spam-control", "Command-line utility for blocking referer spam from your Google Analytics accounts")
 	app.Version("0.0.1")
 
@@ -29,7 +30,7 @@ func cli(args []string) {
 
 	// Display status
 	case status.FullCommand():
-		cli, err := newSpamControl()
+		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
@@ -43,7 +44,7 @@ func cli(args []string) {
 
 	// Update filters
 	case update.FullCommand():
-		cli, err := newSpamControl()
+		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
@@ -57,7 +58,7 @@ func cli(args []string) {
 
 	// Remove spam control
 	case remove.FullCommand():
-		cli, err := newSpamControl()
+		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
@@ -74,8 +75,8 @@ func cli(args []string) {
 	os.Exit(0)
 }
 
-// newSpamControl creates a new spam control instance.
-func newSpamControl() (*spamControl, error) {
+// newCLI creates a new spam control instance.
+func newCLI() (*cli, error) {
 
 	// create a token store
 	homeDirPath, err := homedir.Dir()
@@ -84,7 +85,7 @@ func newSpamControl() (*spamControl, error) {
 	}
 
 	tokenStoreFilePath := filepath.Join(homeDirPath, ".analytics")
-	tokenStore := credentials.NewTokenStore(tokenStoreFilePath)
+	tokenStore := newTokenStore(tokenStoreFilePath)
 
 	// create a new analytis API instance
 	googleAnalyticsClientID := "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com"
@@ -94,51 +95,32 @@ func newSpamControl() (*spamControl, error) {
 		return nil, apiError
 	}
 
-	return &spamControl{
-		analyticsAPI: analyticsAPI,
+	// create a spam control instance
+	spamControl := spamcontrol.New(analyticsAPI)
+
+	return &cli{
+		spamControl: spamControl,
 	}, nil
 
 }
 
-// spamControl contains functions for managing
+// cli contains functions for managing
 // spam control filters of Google Analytics accounts.
-type spamControl struct {
-	analyticsAPI *api.API
+type cli struct {
+	spamControl spamcontrol.SpamController
 }
 
 // Update the spam control filters.
-func (cli *spamControl) Update() error {
-	return cli.analyticsAPI.CreateFilter("578578")
+func (cli *cli) Update() error {
+	return cli.spamControl.Update()
 }
 
 // Remove all spam control filters.
-func (cli *spamControl) Remove() error {
-	return fmt.Errorf("No implemented")
+func (cli *cli) Remove() error {
+	return cli.spamControl.Remove()
 }
 
 // Status displays the spam control status.
-func (cli *spamControl) Status() error {
-
-	// get all available accounts
-	accounts, accountsError := cli.analyticsAPI.GetAccounts()
-	if accountsError != nil {
-		return accountsError
-	}
-
-	for _, account := range accounts {
-
-		// get all filters for account
-		filters, filtersError := cli.analyticsAPI.GetFilters(account.ID)
-		if filtersError != nil {
-			return filtersError
-		}
-
-		for _, filter := range filters {
-			log.Printf("%#v\n", filter)
-		}
-
-	}
-
-	return nil
-
+func (cli *cli) Status() error {
+	return cli.spamControl.Status()
 }

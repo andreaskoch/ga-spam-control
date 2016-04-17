@@ -1,4 +1,4 @@
-package credentials
+package main
 
 import (
 	"io/ioutil"
@@ -12,7 +12,7 @@ import (
 
 func Test_GetToken_FileNotFound_ErrorIsReturned(t *testing.T) {
 	// arrange
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   "/tmp/file-not-found",
 		serializer: tokenSerializer{},
 	}
@@ -38,7 +38,7 @@ func Test_GetToken_FileEmpty_ErrorIsReturned(t *testing.T) {
 	tmpfile.Write(content)
 	tmpfile.Close()
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}
@@ -64,7 +64,7 @@ func Test_GetToken_FileContainsGarbage_ErrorIsReturned(t *testing.T) {
 	tmpfile.Write(content)
 	tmpfile.Close()
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}
@@ -95,7 +95,7 @@ func Test_GetToken_FileExists_TokenIsReturned(t *testing.T) {
 	tmpfile.Write(content)
 	tmpfile.Close()
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}
@@ -118,7 +118,7 @@ func Test_SaveToken_NilGiven_FileIsCreated(t *testing.T) {
 	tmpfile.Close()
 	os.Remove(filePath)
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}
@@ -149,7 +149,7 @@ func Test_SaveToken_NilGiven_FileIsTruncated(t *testing.T) {
 	tmpfile.Write(content)
 	tmpfile.Close()
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}
@@ -182,7 +182,7 @@ func Test_SaveToken_TokenGiven_NoErrorIsReturned(t *testing.T) {
 		Expiry:       time.Now(),
 	}
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}
@@ -211,7 +211,7 @@ func Test_SaveToken_TokenGiven_FileIsWritten(t *testing.T) {
 		Expiry:       time.Now(),
 	}
 
-	tokenStore := TokenStore{
+	tokenStore := filesystemTokenStore{
 		filePath:   filePath,
 		serializer: tokenSerializer{},
 	}

@@ -2,12 +2,18 @@ package api
 
 import (
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
-	"github.com/andreaskoch/ga-spam-control/api/apimodel"
 	"github.com/andreaskoch/ga-spam-control/api/apiservice"
-	"github.com/andreaskoch/ga-spam-control/api/resultmapper"
 )
 
-func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (*API, error) {
+// The AnalyticsAPI interface provides Analytics API functions.
+type AnalyticsAPI interface {
+	GetAccounts() ([]Account, error)
+	GetFilters(accountID string) ([]Filter, error)
+	CreateFilter(accountID string, filter Filter) error
+}
+
+// New creates a new API instance.
+func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (AnalyticsAPI, error) {
 	service, serviceError := apiservice.New(tokenStore, clientID, clientSecret)
 	if serviceError != nil {
 		return nil, serviceError
@@ -18,48 +24,35 @@ func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (
 	}, nil
 }
 
+// API provides CRUD operations for the Google Analytics API.
 type API struct {
 	service *apiservice.GoogleAnalytics
 }
 
-func (api *API) GetAccounts() ([]apimodel.Account, error) {
+// GetAccounts returns all apiservice.Account models.
+func (api *API) GetAccounts() ([]Account, error) {
 	serviceAccounts, err := api.service.GetAccounts()
 	if err != nil {
 		return nil, err
 	}
 
-	apiAccounts := resultmapper.ToModelAccounts(serviceAccounts)
-	return apiAccounts, nil
+	return toModelAccounts(serviceAccounts), nil
 }
 
-func (api *API) GetFilters(accountID string) ([]apimodel.Filter, error) {
+// GetFilters returns all Filter models for the given account.
+func (api *API) GetFilters(accountID string) ([]Filter, error) {
 	serviceFilters, err := api.service.GetFilters(accountID)
 	if err != nil {
 		return nil, err
 	}
 
-	apiFilters := resultmapper.ToModelFilters(serviceFilters)
-	return apiFilters, nil
+	return toModelFilters(serviceFilters), nil
 }
 
-// CreateFilter creates a new filter for the given account ID.
-func (api *API) CreateFilter(accountID string) error {
+// CreateFilter creates a new Filter for the given account ID.
+func (api *API) CreateFilter(accountID string, filter Filter) error {
 
-	filter := apiservice.Filter{
-		Item: apiservice.Item{
-			Name: "jkljk",
-			Type: "EXCLUDE",
-		},
-		ExcludeDetails: apiservice.FilterDetail{
-			Kind:            "analytics#filterExpression",
-			Field:           "CAMPAIGN_SOURCE",
-			MatchType:       "MATCHES",
-			ExpressionValue: `example\.com`,
-			CaseSensitive:   false,
-		},
-	}
-
-	err := api.service.CreateFilter(accountID, filter)
+	err := api.service.CreateFilter(accountID, toServiceFilter(filter))
 	if err != nil {
 		return err
 	}
