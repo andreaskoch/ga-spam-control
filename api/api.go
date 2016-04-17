@@ -28,7 +28,7 @@ func (api *API) GetAccounts() ([]apimodel.Account, error) {
 		return nil, err
 	}
 
-	apiAccounts := resultmapper.MapAccounts(serviceAccounts)
+	apiAccounts := resultmapper.ToModelAccounts(serviceAccounts)
 	return apiAccounts, nil
 }
 
@@ -38,22 +38,25 @@ func (api *API) GetFilters(accountID string) ([]apimodel.Filter, error) {
 		return nil, err
 	}
 
-	apiFilters := resultmapper.MapFilters(serviceFilters)
+	apiFilters := resultmapper.ToModelFilters(serviceFilters)
 	return apiFilters, nil
 }
 
 // CreateFilter creates a new filter for the given account ID.
 func (api *API) CreateFilter(accountID string) error {
 
-	filter := apiservice.Filter{}
-	filter.Name = "jkljk"
-	filter.Type = "EXCLUDE"
-	filter.ExcludeDetails = apiservice.FilterDetail{
-		Kind:            "analytics#filterExpression",
-		Field:           "CAMPAIGN_SOURCE",
-		MatchType:       "MATCHES",
-		ExpressionValue: `example\.com`,
-		CaseSensitive:   false,
+	filter := apiservice.Filter{
+		Item: apiservice.Item{
+			Name: "jkljk",
+			Type: "EXCLUDE",
+		},
+		ExcludeDetails: apiservice.FilterDetail{
+			Kind:            "analytics#filterExpression",
+			Field:           "CAMPAIGN_SOURCE",
+			MatchType:       "MATCHES",
+			ExpressionValue: `example\.com`,
+			CaseSensitive:   false,
+		},
 	}
 
 	err := api.service.CreateFilter(accountID, filter)
