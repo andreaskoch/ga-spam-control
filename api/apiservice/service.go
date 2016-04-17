@@ -3,6 +3,7 @@ package apiservice
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
@@ -48,6 +49,10 @@ func (service *GoogleAnalytics) GetAccounts() ([]Account, error) {
 		return nil, apiError
 	}
 
+	if err := handleErrors(response); err != nil {
+		return nil, err
+	}
+
 	serializer := &accountResultsSerializer{}
 	results, deserializeError := serializer.Deserialize(response.Body)
 	if deserializeError != nil {
@@ -63,6 +68,10 @@ func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
 	response, err := service.client.Get(uri)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := handleErrors(response); err != nil {
 		return nil, err
 	}
 
@@ -91,9 +100,21 @@ func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) er
 		return err
 	}
 
+	if err := handleErrors(response); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func handleErrors(response *http.Response) error {
 	if response.StatusCode != 200 {
 		errorResponse, decodeError := decodeResponse(response.Body)
 		if decodeError != nil {
+			if body, err := ioutil.ReadAll(response.Body); err == nil {
+				return fmt.Errorf("%s", body)
+			}
+
 			return decodeError
 		}
 
