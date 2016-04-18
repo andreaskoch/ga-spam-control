@@ -1,8 +1,8 @@
 package spamcontrol
 
 import (
+	"fmt"
 	"log"
-	"strings"
 
 	"github.com/andreaskoch/ga-spam-control/api"
 )
@@ -15,22 +15,42 @@ type SpamController interface {
 
 // New creates a new spam control instance.
 func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
+
+	accountProvider := remoteAccountProvider{analyticsAPI}
+
+	domainProvider := &remoteSpamDomainProvider{}
+	filterNameProvider := &spamFilterNameProvider{"ga-spam-control"}
+
+	filterProvider := &remoteFilterProvider{
+		analyticsAPI:       analyticsAPI,
+		filterNameProvider: filterNameProvider,
+	}
+
+	filterFactory := &spamFilterFactory{
+		filterNameProvider:   filterNameProvider,
+		filterValueMaxLength: 255,
+	}
+
 	return &SpamControl{
-		analyticsAPI: analyticsAPI,
-		filterName:   "ga-spam-control",
+		accountProvider: accountProvider,
+		domainProvider:  domainProvider,
+		filterFactory:   filterFactory,
+		filterProvider:  filterProvider,
 	}
 }
 
 // The SpamControl type provides functions for
 // managing Google Analtics spam filters.
 type SpamControl struct {
-	analyticsAPI api.AnalyticsAPI
-	filterName   string
+	accountProvider accountProvider
+	domainProvider  spamDomainProvider
+	filterFactory   filterFactory
+	filterProvider  filterProvider
 }
 
 func (spamControl *SpamControl) Remove() error {
 	// get all available accounts
-	accounts, accountsError := spamControl.analyticsAPI.GetAccounts()
+	accounts, accountsError := spamControl.accountProvider.GetAccounts()
 	if accountsError != nil {
 		return accountsError
 	}
@@ -38,7 +58,7 @@ func (spamControl *SpamControl) Remove() error {
 	for _, account := range accounts {
 
 		// get all filters for account
-		filters, filtersError := spamControl.analyticsAPI.GetFilters(account.ID)
+		filters, filtersError := spamControl.filterProvider.GetExistingFilters(account.ID)
 		if filtersError != nil {
 			return filtersError
 		}
@@ -58,7 +78,7 @@ func (spamControl *SpamControl) Remove() error {
 // an error will be returned.
 func (spamControl *SpamControl) Status() (StateOverview, error) {
 	// get all available accounts
-	accounts, accountsError := spamControl.analyticsAPI.GetAccounts()
+	accounts, accountsError := spamControl.accountProvider.GetAccounts()
 	if accountsError != nil {
 		return StateOverview{}, accountsError
 	}
@@ -79,7 +99,7 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 		}
 
 		// get all filters for account
-		filters, filtersError := spamControl.analyticsAPI.GetFilters(account.ID)
+		filters, filtersError := spamControl.filterProvider.GetExistingFilters(account.ID)
 		if filtersError != nil {
 
 			// failed to fetch filters for account
@@ -100,11 +120,6 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 		spamControlFilterIsUpToDate := false
 
 		for _, filter := range filters {
-
-			// ignore all non spam-control filters
-			if !strings.HasPrefix(filter.Name, spamControl.filterName) {
-				continue
-			}
 
 			// there is a spam control filter
 			hasSpamControlFilter = true
@@ -158,18 +173,35 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	return *overview, nil
 }
 
+// Update creates or updates spam-control filters for all accounts.
 func (spamControl *SpamControl) Update() error {
-	filter := api.Filter{
-		Name: spamControl.filterName,
-		Type: "EXCLUDE",
-		ExcludeDetails: api.FilterDetail{
-			Kind:            "analytics#filterExpression",
-			Field:           "CAMPAIGN_SOURCE",
-			MatchType:       "MATCHES",
-			ExpressionValue: `example\.com`,
-			CaseSensitive:   false,
-		},
+
+	// get the latest spam domain names
+	spamDomainNames, spamDomainError := spamControl.domainProvider.GetSpamDomains()
+	if spamDomainError != nil {
+		return spamDomainError
 	}
 
-	return spamControl.analyticsAPI.CreateFilter("578578", filter)
+	// create new filters for the given domain names
+	filters, filterError := spamControl.filterFactory.GetNewFilters(spamDomainNames)
+	if filterError != nil {
+		return filterError
+	}
+
+	// get all available accounts
+	accounts, accountsError := spamControl.accountProvider.GetAccounts()
+	if accountsError != nil {
+		return accountsError
+	}
+
+	// create the filters for all accounts
+	for _, account := range accounts {
+		for _, filter := range filters {
+			if createError := spamControl.filterProvider.CreateFilter(account.ID, filter); createError != nil {
+				return fmt.Errorf("Failed to create filter for account %q (%s): %s", account.Name, account.ID, createError.Error())
+			}
+		}
+	}
+
+	return nil
 }
