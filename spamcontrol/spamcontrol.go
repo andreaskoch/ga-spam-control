@@ -2,6 +2,7 @@ package spamcontrol
 
 import (
 	"log"
+	"strings"
 
 	"github.com/andreaskoch/ga-spam-control/api"
 )
@@ -16,6 +17,7 @@ type SpamController interface {
 func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 	return &SpamControl{
 		analyticsAPI: analyticsAPI,
+		filterName:   "ga-spam-control",
 	}
 }
 
@@ -23,6 +25,7 @@ func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 // managing Google Analtics spam filters.
 type SpamControl struct {
 	analyticsAPI api.AnalyticsAPI
+	filterName   string
 }
 
 func (spamControl *SpamControl) Remove() error {
@@ -61,20 +64,94 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	}
 
 	overview := &StateOverview{
-		OverallStatus: StatusUpToDate(),
+		OverallStatus: StatusUnknown(),
+		Accounts:      make([]AccountStatus, 0),
 	}
 
+	// get the status for each account
+	overallStatusIsSet := false
 	for _, account := range accounts {
 
-		// get all filters for account
-		_, filtersError := spamControl.analyticsAPI.GetFilters(account.ID)
-		if filtersError != nil {
-			return StateOverview{}, filtersError
+		accountStatus := &AccountStatus{
+			AccountID:   account.ID,
+			AccountName: account.Name,
+			Status:      StatusUnknown(),
 		}
 
-		// for _, filter := range filters {
-		// log.Printf("%#v\n", filter)
-		// }
+		// get all filters for account
+		filters, filtersError := spamControl.analyticsAPI.GetFilters(account.ID)
+		if filtersError != nil {
+
+			// failed to fetch filters for account
+			// set status: error
+			accountStatus.Status = StatusError(filtersError.Error())
+			overview.Accounts = append(overview.Accounts, *accountStatus)
+
+			// set overall status
+			overview.OverallStatus = StatusError(filtersError.Error())
+			overallStatusIsSet = true
+
+			continue
+		}
+
+		// check if spam control filter exists
+		filterContent := "example.com"
+		hasSpamControlFilter := false
+		spamControlFilterIsUpToDate := false
+
+		for _, filter := range filters {
+
+			// ignore all non spam-control filters
+			if !strings.HasPrefix(filter.Name, spamControl.filterName) {
+				continue
+			}
+
+			// there is a spam control filter
+			hasSpamControlFilter = true
+
+			// check if it needs to be updated
+			if filter.ExcludeDetails.ExpressionValue == filterContent {
+				spamControlFilterIsUpToDate = true
+			} else {
+				spamControlFilterIsUpToDate = false
+			}
+		}
+
+		if !hasSpamControlFilter {
+			// set status: not-installed
+			accountStatus.Status = StatusNotInstalled()
+
+			if !overallStatusIsSet {
+				overview.OverallStatus = StatusNotInstalled()
+				overallStatusIsSet = true
+			}
+		}
+
+		if isUpToDate := hasSpamControlFilter && spamControlFilterIsUpToDate; isUpToDate {
+			// set status: up-to-date
+			accountStatus.Status = StatusUpToDate()
+
+			if !overallStatusIsSet {
+				overview.OverallStatus = StatusUpToDate()
+			}
+		}
+
+		if isOutdated := hasSpamControlFilter && !spamControlFilterIsUpToDate; isOutdated {
+			// set status: outdated
+			accountStatus.Status = StatusOutdated()
+			overview.OverallStatus = StatusOutdated()
+
+			if !overallStatusIsSet {
+				overview.OverallStatus = StatusOutdated()
+				overallStatusIsSet = true
+			}
+		}
+
+		overview.Accounts = append(overview.Accounts, *accountStatus)
+
+		// reset status
+		hasSpamControlFilter = false
+		spamControlFilterIsUpToDate = false
 
 	}
 
@@ -83,7 +160,7 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 
 func (spamControl *SpamControl) Update() error {
 	filter := api.Filter{
-		Name: "jkljk",
+		Name: spamControl.filterName,
 		Type: "EXCLUDE",
 		ExcludeDetails: api.FilterDetail{
 			Kind:            "analytics#filterExpression",

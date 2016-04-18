@@ -9,6 +9,7 @@ type StateOverview struct {
 // An AccountStatus represents the spam-control status
 // of a specific account.
 type AccountStatus struct {
-	AccountID string `json:"accountId"`
-	Status    Status `json:"status"`
+	AccountID   string `json:"accountId"`
+	AccountName string `json:"accountName"`
+	Status      Status `json:"status"`
 }
