@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/andreaskoch/ga-spam-control/api"
+	"github.com/andreaskoch/ga-spam-control/cli/templates"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol"
 	"github.com/mitchellh/go-homedir"
 
@@ -122,5 +124,20 @@ func (cli *cli) Remove() error {
 
 // Status displays the spam control status.
 func (cli *cli) Status() error {
-	return cli.spamControl.Status()
+	statusViewModel, err := cli.spamControl.Status()
+	if err != nil {
+		return err
+	}
+
+	statusTemplate, parseError := template.New("Status").Parse(templates.Status)
+	if parseError != nil {
+		return parseError
+	}
+
+	renderError := statusTemplate.Execute(os.Stdout, statusViewModel)
+	if renderError != nil {
+		return renderError
+	}
+
+	return nil
 }
