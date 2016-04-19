@@ -44,19 +44,19 @@ type GoogleAnalytics struct {
 func (service *GoogleAnalytics) GetAccounts() ([]Account, error) {
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts", service.apiHostname)
-	response, apiError := service.client.Get(uri)
-	if apiError != nil {
-		return nil, apiError
+	response, requestError := service.client.Get(uri)
+	if requestError != nil {
+		return nil, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
 	}
 
 	if err := handleErrors(response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("The GET request against %q did not succeed: %s", uri, err.Error())
 	}
 
 	serializer := &accountResultsSerializer{}
 	results, deserializeError := serializer.Deserialize(response.Body)
 	if deserializeError != nil {
-		return nil, deserializeError
+		return nil, fmt.Errorf("The accounts response could not be deserialized: %s", deserializeError.Error())
 	}
 
 	return results.Items, nil
@@ -66,19 +66,19 @@ func (service *GoogleAnalytics) GetAccounts() ([]Account, error) {
 func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
-	response, err := service.client.Get(uri)
-	if err != nil {
-		return nil, err
+	response, requestError := service.client.Get(uri)
+	if requestError != nil {
+		return nil, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
 	}
 
 	if err := handleErrors(response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("The GET request against %q did not succeed: %s", uri, err.Error())
 	}
 
 	serializer := &filterResultsSerializer{}
 	results, deserializeError := serializer.Deserialize(response.Body)
 	if deserializeError != nil {
-		return nil, deserializeError
+		return nil, fmt.Errorf("The filters response could not be deserialized: %s", deserializeError.Error())
 	}
 
 	return results.Items, nil
@@ -91,24 +91,46 @@ func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) er
 	serializer := &filterSerializer{}
 	serializeError := serializer.Serialize(buffer, &filter)
 	if serializeError != nil {
-		return serializeError
+		return fmt.Errorf("The given filter model could not be serialized: %s", serializeError.Error())
 	}
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
-	response, err := service.client.Post(uri, "application/json; charset=UTF-8", buffer)
-	if err != nil {
-		return err
+	response, requestError := service.client.Post(uri, "application/json; charset=UTF-8", buffer)
+	if requestError != nil {
+		return fmt.Errorf("The POST request against %q failed: %s", uri, requestError.Error())
 	}
 
 	if err := handleErrors(response); err != nil {
-		return err
+		return fmt.Errorf("The POST request against %q did not succeed: %s", uri, err.Error())
+	}
+
+	return nil
+}
+
+// RemoveFilter deletes the given filter from the specified account.
+func (service *GoogleAnalytics) RemoveFilter(accountID, filterID string) error {
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters/%s", service.apiHostname, accountID, filterID)
+
+	request, createRequestError := http.NewRequest(http.MethodDelete, uri, nil)
+	if createRequestError != nil {
+		return fmt.Errorf("The DELETE request could not be created: %s", createRequestError.Error())
+	}
+
+	response, requestError := service.client.Do(request)
+	if requestError != nil {
+		return fmt.Errorf("The DELETE request against %q failed: %s", uri, requestError.Error())
+	}
+
+	if err := handleErrors(response); err != nil {
+		return fmt.Errorf("The DELETE request against %q did not succeed: %s", uri, err.Error())
 	}
 
 	return nil
 }
 
 func handleErrors(response *http.Response) error {
-	if response.StatusCode != 200 {
+	if response.StatusCode != 200 && response.StatusCode != 204 {
 		errorResponse, decodeError := decodeResponse(response.Body)
 		if decodeError != nil {
 			if body, err := ioutil.ReadAll(response.Body); err == nil {

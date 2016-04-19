@@ -9,6 +9,9 @@ type filterProvider interface {
 
 	// CreateFilter creates the given filter.
 	CreateFilter(accountID string, filter api.Filter) error
+
+	// RemoveFilter deletes the given filter from the specified account.
+	RemoveFilter(accountID, filterID string) error
 }
 
 type remoteFilterProvider struct {
@@ -43,4 +46,9 @@ func (filterProvider remoteFilterProvider) GetExistingFilters(accountID string) 
 // CreateFilter creates the given filter.
 func (filterProvider remoteFilterProvider) CreateFilter(accountID string, filter api.Filter) error {
 	return filterProvider.analyticsAPI.CreateFilter(accountID, filter)
+}
+
+// RemoveFilter deletes the given filter from the specified account.
+func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID string) error {
+	return filterProvider.analyticsAPI.RemoveFilter(accountID, filterID)
 }

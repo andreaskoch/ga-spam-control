@@ -2,7 +2,6 @@ package spamcontrol
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/andreaskoch/ga-spam-control/api"
 )
@@ -64,7 +63,9 @@ func (spamControl *SpamControl) Remove() error {
 		}
 
 		for _, filter := range filters {
-			log.Printf("%#v\n", filter)
+			if err := spamControl.filterProvider.RemoveFilter(account.ID, filter.ID); err != nil {
+				return err
+			}
 		}
 
 	}

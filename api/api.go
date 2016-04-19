@@ -7,9 +7,18 @@ import (
 
 // The AnalyticsAPI interface provides Analytics API functions.
 type AnalyticsAPI interface {
+
+	// GetAccounts returns all apiservice.Account models.
 	GetAccounts() ([]Account, error)
-	GetFilters(accountID string) ([]Filter, error)
+
+	// CreateFilter creates a new Filter for the given account ID.
 	CreateFilter(accountID string, filter Filter) error
+
+	// GetFilters returns all Filter models for the given account.
+	GetFilters(accountID string) ([]Filter, error)
+
+	// RemoveFilter deletes the given filter from the specified account.
+	RemoveFilter(accountID, filterID string) error
 }
 
 // New creates a new API instance.
@@ -39,6 +48,17 @@ func (api *API) GetAccounts() ([]Account, error) {
 	return toModelAccounts(serviceAccounts), nil
 }
 
+// CreateFilter creates a new Filter for the given account ID.
+func (api *API) CreateFilter(accountID string, filter Filter) error {
+
+	err := api.service.CreateFilter(accountID, toServiceFilter(filter))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetFilters returns all Filter models for the given account.
 func (api *API) GetFilters(accountID string) ([]Filter, error) {
 	serviceFilters, err := api.service.GetFilters(accountID)
@@ -49,10 +69,10 @@ func (api *API) GetFilters(accountID string) ([]Filter, error) {
 	return toModelFilters(serviceFilters), nil
 }
 
-// CreateFilter creates a new Filter for the given account ID.
-func (api *API) CreateFilter(accountID string, filter Filter) error {
+// RemoveFilter deletes the given filter from the specified account.
+func (api *API) RemoveFilter(accountID, filterID string) error {
 
-	err := api.service.CreateFilter(accountID, toServiceFilter(filter))
+	err := api.service.RemoveFilter(accountID, filterID)
 	if err != nil {
 		return err
 	}
