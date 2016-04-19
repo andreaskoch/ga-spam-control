@@ -65,7 +65,7 @@ func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) sta
 
 	// Status: error (cannot fetch existing filters)
 	if existingFilterError != nil {
-		return status.Error(existingFilterError.Error())
+		return status.Error
 	}
 
 	// Status: not-installed
@@ -78,7 +78,7 @@ func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) sta
 
 	// Status: error (cannot determine new filters)
 	if latestFiltersError != nil {
-		return status.Error(latestFiltersError.Error())
+		return status.Error
 	}
 
 	// Status: outdated

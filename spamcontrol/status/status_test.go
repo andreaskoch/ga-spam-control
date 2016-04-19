@@ -41,18 +41,18 @@ func Test_getMajorityNumber(t *testing.T) {
 func Test_getMajorityStatus_AllStatusesAreError_ErrorStatusIsReturned(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		ErrorDefault,
-		ErrorDefault,
-		ErrorDefault,
+		Error,
+		Error,
+		Error,
 	}
 
 	// act
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if !exists || result.Name() != ErrorDefault.Name() {
+	if !exists || result != Error {
 		t.Fail()
-		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", ErrorDefault, result)
+		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", Error, result)
 	}
 }
 
@@ -62,7 +62,7 @@ func Test_getMajorityStatus_MajorityAvailable_MajorIsReturned(t *testing.T) {
 		NotInstalled,
 		NotInstalled,
 		NotInstalled,
-		ErrorDefault,
+		Error,
 		Unknown,
 	}
 
@@ -70,7 +70,7 @@ func Test_getMajorityStatus_MajorityAvailable_MajorIsReturned(t *testing.T) {
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if !exists || result.Name() != NotInstalled.Name() {
+	if !exists || result != NotInstalled {
 		t.Fail()
 		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", NotInstalled, result)
 	}
@@ -79,7 +79,7 @@ func Test_getMajorityStatus_MajorityAvailable_MajorIsReturned(t *testing.T) {
 func Test_getMajorityStatus_NoMajority_ResultIsFalse(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		ErrorDefault,
+		Error,
 		Unknown,
 		UpToDate,
 	}
@@ -88,7 +88,7 @@ func Test_getMajorityStatus_NoMajority_ResultIsFalse(t *testing.T) {
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if exists || result != nil {
+	if exists || result != NotSet {
 		t.Fail()
 		t.Logf("getMajorityStatus returned a status even though there is no majority.")
 	}
@@ -102,7 +102,7 @@ func Test_getMajorityStatus_NoStatuses_ResultIsFalse(t *testing.T) {
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if exists || result != nil {
+	if exists || result != NotSet {
 		t.Fail()
 		t.Logf("getMajorityStatus returned a status even though no statuses were given.")
 	}
@@ -113,7 +113,7 @@ func Test_getMajorityStatus_Nil_ResultIsFalse(t *testing.T) {
 	exists, result := getMajorityStatus(nil)
 
 	// assert
-	if exists || result != nil {
+	if exists || result != NotSet {
 		t.Fail()
 		t.Logf("getMajorityStatus returned a status even though no statuses were given.")
 	}
@@ -127,7 +127,7 @@ func Test_CalculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
 	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != Unknown.Name() {
+	if result != Unknown {
 		t.Fail()
 		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Unknown)
 	}
@@ -136,7 +136,7 @@ func Test_CalculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
 func Test_CalculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		ErrorDefault,
+		Error,
 		Unknown,
 		UpToDate,
 	}
@@ -145,7 +145,7 @@ func Test_CalculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T
 	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != Unknown.Name() {
+	if result != Unknown {
 		t.Fail()
 		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Unknown)
 	}
@@ -163,7 +163,7 @@ func Test_CalculateGlobalStatus_AllStatusesAreUpToDate_ResultStatusIsUpToDate(t 
 	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != UpToDate.Name() {
+	if result != UpToDate {
 		t.Fail()
 		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, UpToDate)
 	}
@@ -181,7 +181,7 @@ func Test_CalculateGlobalStatus_AllStatusesAreOutdated_ResultStatusIsOutdated(t 
 	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != Outdated.Name() {
+	if result != Outdated {
 		t.Fail()
 		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Outdated)
 	}
