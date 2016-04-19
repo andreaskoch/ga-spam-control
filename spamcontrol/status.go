@@ -1,5 +1,7 @@
 package spamcontrol
 
+import "math"
+
 // A Status defines the current situation of the spam-control filters.
 // A Status has always has a name and potentially a description.
 type Status interface {
@@ -105,30 +107,50 @@ func calculateGlobalStatus(subStatuses []Status) Status {
 		return StatusUnknown()
 	}
 
-	// Status: up-to-date
-	if yes, _ := allStatusesAre(subStatuses, StatusUpToDate()); yes {
-		return StatusUpToDate()
-	}
-
-	// Status: outdated
-	if yes, _ := allStatusesAre(subStatuses, StatusOutdated()); yes {
-		return StatusOutdated()
-	}
-
-	// Status: not-installed
-	if yes, _ := allStatusesAre(subStatuses, StatusNotInstalled()); yes {
-		return StatusNotInstalled()
-	}
-
 	return StatusError("")
 }
 
-func allStatusesAre(statuses []Status, status Status) (yes bool, deviantStatus Status) {
-	for _, subStatus := range statuses {
-		if !subStatus.Equals(status) {
-			return false, subStatus
+// getMajorityNumber returns the number that
+// would represent the majority for the given population.
+func getMajorityNumber(population int) int {
+	majority := math.Ceil(float64(population) * 0.5)
+	remainder := math.Mod(float64(population), majority)
+	if population != 1 && remainder == 0 {
+		majority += 1
+	}
+
+	return int(majority)
+}
+
+// getMajorityStatus detects if there is a majority
+// status in the given list of statuses.
+// If yes, it will return true and the status that makes
+// up the majority of the entries.
+// If no, it will return false and nil.
+func getMajorityStatus(statuses []Status) (bool, Status) {
+	if statuses == nil || len(statuses) == 0 {
+		return false, nil
+	}
+
+	statusUsages := make(map[string]int)
+
+	// build statusUsages statistic
+	for _, status := range statuses {
+		statusUsages[status.Name()] = statusUsages[status.Name()] + 1
+	}
+
+	// determine the majority
+	majority := getMajorityNumber(len(statuses))
+
+	for _, status := range statuses {
+		statusUsage := statusUsages[status.Name()]
+		if statusUsage >= majority {
+
+			// majority exists
+			return true, status
 		}
 	}
 
-	return true, nil
+	// no majority
+	return false, nil
 }
