@@ -10,21 +10,26 @@ import (
 
 type filterFactory interface {
 
-	// GetNewFilters returns a list of new api.Filter models
-	// for the given list of spam domain names.
-	GetNewFilters(domainNames []string) ([]api.Filter, error)
+	// GetNewFilters returns a list of new api.Filter models.
+	GetNewFilters() ([]api.Filter, error)
 }
 
 type spamFilterFactory struct {
+	domainProvider       spamDomainProvider
 	filterNameProvider   filterNameProvider
 	filterValueMaxLength int
 }
 
-// GetNewFilters returns a list of new api.Filter models
-// for the given list of spam domain names.
-func (filterFactory spamFilterFactory) GetNewFilters(domainNames []string) ([]api.Filter, error) {
+// GetNewFilters returns a list of new api.Filter models.
+func (filterFactory spamFilterFactory) GetNewFilters() ([]api.Filter, error) {
 
 	filters := make([]api.Filter, 0)
+
+	// get the latest referer spam domain names
+	domainNames, domainNameError := filterFactory.domainProvider.GetSpamDomains()
+	if domainNameError != nil {
+		return nil, domainNameError
+	}
 
 	// escape and segment the domain names
 	// for the usage as the expression value.

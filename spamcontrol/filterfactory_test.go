@@ -6,20 +6,22 @@ type dummyDomainProvider struct {
 	domainNames []string
 }
 
-func (domainProvider dummyDomainProvider) GetSpamDomains() []string {
-	return domainProvider.domainNames
+func (domainProvider dummyDomainProvider) GetSpamDomains() ([]string, error) {
+	return domainProvider.domainNames, nil
 }
 
 func Test_GetNewFilters_NoDomains_NoFilters(t *testing.T) {
 	// arrange
 	domains := []string{}
+	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
+		domainProvider:       spamDomainProvider,
 		filterNameProvider:   &spamFilterNameProvider{"ga-spam-control"},
 		filterValueMaxLength: 255,
 	}
 
 	// act
-	filters, _ := filterFactory.GetNewFilters(domains)
+	filters, _ := filterFactory.GetNewFilters()
 
 	// assert
 	if len(filters) > 0 {
@@ -30,13 +32,15 @@ func Test_GetNewFilters_NoDomains_NoFilters(t *testing.T) {
 func Test_GetNewFilters_ValidDomains_FilterIsReturned(t *testing.T) {
 	// arrange
 	domains := []string{"referer-spam.com", "referer-spam.co.uk"}
+	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
+		domainProvider:       spamDomainProvider,
 		filterNameProvider:   &spamFilterNameProvider{"ga-spam-control"},
 		filterValueMaxLength: 255,
 	}
 
 	// act
-	filters, _ := filterFactory.GetNewFilters(domains)
+	filters, _ := filterFactory.GetNewFilters()
 
 	// assert
 	if len(filters) != 1 {
@@ -47,13 +51,15 @@ func Test_GetNewFilters_ValidDomains_FilterIsReturned(t *testing.T) {
 func Test_GetNewFilters_ValidDomains_FilterExpressionValueIsCorrect(t *testing.T) {
 	// arrange
 	domains := []string{"referer-spam.com", "referer-spam.co.uk"}
+	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
+		domainProvider:       spamDomainProvider,
 		filterNameProvider:   &spamFilterNameProvider{"ga-spam-control"},
 		filterValueMaxLength: 255,
 	}
 
 	// act
-	filters, _ := filterFactory.GetNewFilters(domains)
+	filters, _ := filterFactory.GetNewFilters()
 
 	// assert
 	filter := filters[0]
@@ -66,13 +72,15 @@ func Test_GetNewFilters_ValidDomains_FilterExpressionValueIsCorrect(t *testing.T
 func Test_GetNewFilters_ValidDomains_FilterNameIsCorrect(t *testing.T) {
 	// arrange
 	domains := []string{"referer-spam.com", "referer-spam.co.uk"}
+	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
+		domainProvider:       spamDomainProvider,
 		filterNameProvider:   &spamFilterNameProvider{"ga-spam-control"},
 		filterValueMaxLength: 255,
 	}
 
 	// act
-	filters, _ := filterFactory.GetNewFilters(domains)
+	filters, _ := filterFactory.GetNewFilters()
 
 	// assert
 	filter := filters[0]
@@ -91,13 +99,15 @@ func Test_GetNewFilters_ManyDomains_ThreeFiltersAreReturned(t *testing.T) {
 		"1pamm.ru",
 		"4webmasters.org",
 	}
+	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
+		domainProvider:       spamDomainProvider,
 		filterNameProvider:   &spamFilterNameProvider{"ga-spam-control"},
 		filterValueMaxLength: 35,
 	}
 
 	// act
-	filters, _ := filterFactory.GetNewFilters(domains)
+	filters, _ := filterFactory.GetNewFilters()
 
 	// assert
 	if len(filters) != 3 {
@@ -111,13 +121,15 @@ func Test_GetNewFilters_TooLongDomainName_ErrorIsReturned(t *testing.T) {
 	domains := []string{
 		"1234567890-too-long-to-fit.com",
 	}
+	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
+		domainProvider:       spamDomainProvider,
 		filterNameProvider:   &spamFilterNameProvider{"ga-spam-control"},
 		filterValueMaxLength: 10,
 	}
 
 	// act
-	_, err := filterFactory.GetNewFilters(domains)
+	_, err := filterFactory.GetNewFilters()
 
 	// assert
 	if err == nil {

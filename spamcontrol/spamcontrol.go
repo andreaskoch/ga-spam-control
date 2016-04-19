@@ -20,19 +20,20 @@ func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 	domainProvider := &remoteSpamDomainProvider{}
 	filterNameProvider := &spamFilterNameProvider{"ga-spam-control"}
 
-	filterProvider := &remoteFilterProvider{
-		analyticsAPI:       analyticsAPI,
-		filterNameProvider: filterNameProvider,
-	}
-
 	filterFactory := &spamFilterFactory{
+		domainProvider:       domainProvider,
 		filterNameProvider:   filterNameProvider,
 		filterValueMaxLength: 255,
 	}
 
+	filterProvider := &remoteFilterProvider{
+		analyticsAPI:       analyticsAPI,
+		filterNameProvider: filterNameProvider,
+		filterFactory:      filterFactory,
+	}
+
 	return &SpamControl{
 		accountProvider: accountProvider,
-		domainProvider:  domainProvider,
 		filterFactory:   filterFactory,
 		filterProvider:  filterProvider,
 	}
@@ -84,107 +85,40 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 		return StateOverview{}, accountsError
 	}
 
-	overview := &StateOverview{
+	overviewModel := &StateOverview{
 		OverallStatus: StatusUnknown(),
 		Accounts:      make([]AccountStatus, 0),
 	}
 
 	// get the status for each account
-	overallStatusIsSet := false
+	subStatuses := make([]Status, len(accounts), len(accounts))
 	for _, account := range accounts {
 
-		accountStatus := &AccountStatus{
+		status := spamControl.filterProvider.GetFilterStatus(account.ID)
+		accountStatusModel := AccountStatus{
 			AccountID:   account.ID,
 			AccountName: account.Name,
-			Status:      StatusUnknown(),
+			Status:      status,
 		}
 
-		// get all filters for account
-		filters, filtersError := spamControl.filterProvider.GetExistingFilters(account.ID)
-		if filtersError != nil {
+		// capture the account status for the calculation of the
+		// overall status
+		subStatuses = append(subStatuses, status)
 
-			// failed to fetch filters for account
-			// set status: error
-			accountStatus.Status = StatusError(filtersError.Error())
-			overview.Accounts = append(overview.Accounts, *accountStatus)
-
-			// set overall status
-			overview.OverallStatus = StatusError(filtersError.Error())
-			overallStatusIsSet = true
-
-			continue
-		}
-
-		// check if spam control filter exists
-		filterContent := "example.com"
-		hasSpamControlFilter := false
-		spamControlFilterIsUpToDate := false
-
-		for _, filter := range filters {
-
-			// there is a spam control filter
-			hasSpamControlFilter = true
-
-			// check if it needs to be updated
-			if filter.ExcludeDetails.ExpressionValue == filterContent {
-				spamControlFilterIsUpToDate = true
-			} else {
-				spamControlFilterIsUpToDate = false
-			}
-		}
-
-		if !hasSpamControlFilter {
-			// set status: not-installed
-			accountStatus.Status = StatusNotInstalled()
-
-			if !overallStatusIsSet {
-				overview.OverallStatus = StatusNotInstalled()
-				overallStatusIsSet = true
-			}
-		}
-
-		if isUpToDate := hasSpamControlFilter && spamControlFilterIsUpToDate; isUpToDate {
-			// set status: up-to-date
-			accountStatus.Status = StatusUpToDate()
-
-			if !overallStatusIsSet {
-				overview.OverallStatus = StatusUpToDate()
-			}
-		}
-
-		if isOutdated := hasSpamControlFilter && !spamControlFilterIsUpToDate; isOutdated {
-			// set status: outdated
-			accountStatus.Status = StatusOutdated()
-			overview.OverallStatus = StatusOutdated()
-
-			if !overallStatusIsSet {
-				overview.OverallStatus = StatusOutdated()
-				overallStatusIsSet = true
-			}
-		}
-
-		overview.Accounts = append(overview.Accounts, *accountStatus)
-
-		// reset status
-		hasSpamControlFilter = false
-		spamControlFilterIsUpToDate = false
-
+		overviewModel.Accounts = append(overviewModel.Accounts, accountStatusModel)
 	}
 
-	return *overview, nil
+	// set the overall status
+	overviewModel.OverallStatus = calculateGlobalStatus(subStatuses)
+
+	return *overviewModel, nil
 }
 
 // Update creates or updates spam-control filters for all accounts.
 func (spamControl *SpamControl) Update() error {
 
-	// get the latest spam domain names
-	spamDomainNames, spamDomainError := spamControl.domainProvider.GetSpamDomains()
-	if spamDomainError != nil {
-		return spamDomainError
-	}
-
 	// create new filters for the given domain names
-	filters, filterError := spamControl.filterFactory.GetNewFilters(spamDomainNames)
+	filters, filterError := spamControl.filterFactory.GetNewFilters()
 	if filterError != nil {
 		return filterError
 	}

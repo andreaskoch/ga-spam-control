@@ -11,6 +11,9 @@ type Status interface {
 
 	// Details returns the description text of the Status (optional).
 	Details() string
+
+	// Equals check if the current status matches to given Status.
+	Equals(otherStatus Status) bool
 }
 
 type baseStatus struct {
@@ -31,6 +34,11 @@ func (status baseStatus) Name() string {
 // Details returns the description text of the Status.
 func (status baseStatus) Details() string {
 	return status.details
+}
+
+// Equals check if the current status matches to given Status.
+func (status baseStatus) Equals(otherStatus Status) bool {
+	return status.Name() == otherStatus.Name()
 }
 
 type Unknown struct {
@@ -86,4 +94,41 @@ func StatusOutdated() Status {
 // are installed.
 func StatusNotInstalled() Status {
 	return NotInstalled{baseStatus: baseStatus{"not-installed", ""}}
+}
+
+// calculateGlobalStatus determines a global status
+// based on the given sub-statuses.
+func calculateGlobalStatus(subStatuses []Status) Status {
+
+	// Status: unknown
+	if len(subStatuses) == 0 {
+		return StatusUnknown()
+	}
+
+	// Status: up-to-date
+	if yes, _ := allStatusesAre(subStatuses, StatusUpToDate()); yes {
+		return StatusUpToDate()
+	}
+
+	// Status: outdated
+	if yes, _ := allStatusesAre(subStatuses, StatusOutdated()); yes {
+		return StatusOutdated()
+	}
+
+	// Status: not-installed
+	if yes, _ := allStatusesAre(subStatuses, StatusNotInstalled()); yes {
+		return StatusNotInstalled()
+	}
+
+	return StatusError("")
+}
+
+func allStatusesAre(statuses []Status, status Status) (yes bool, deviantStatus Status) {
+	for _, subStatus := range statuses {
+		if !subStatus.Equals(status) {
+			return false, subStatus
+		}
+	}
+
+	return true, nil
 }
