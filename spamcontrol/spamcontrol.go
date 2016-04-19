@@ -91,7 +91,7 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	}
 
 	// get the status for each account
-	subStatuses := make([]Status, len(accounts), len(accounts))
+	subStatuses := make([]Status, 0, len(accounts))
 	for _, account := range accounts {
 
 		status := spamControl.filterProvider.GetFilterStatus(account.ID)

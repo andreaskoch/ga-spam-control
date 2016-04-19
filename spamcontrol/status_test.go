@@ -118,3 +118,71 @@ func Test_getMajorityStatus_Nil_ResultIsFalse(t *testing.T) {
 		t.Logf("getMajorityStatus returned a status even though no statuses were given.")
 	}
 }
+
+func Test_calculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
+	// arrange
+	statuses := []Status{}
+
+	// act
+	result := calculateGlobalStatus(statuses)
+
+	// assert
+	if result.Name() != StatusUnknown().Name() {
+		t.Fail()
+		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusUnknown())
+	}
+}
+
+func Test_calculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T) {
+	// arrange
+	statuses := []Status{
+		StatusError("1"),
+		StatusUnknown(),
+		StatusUpToDate(),
+	}
+
+	// act
+	result := calculateGlobalStatus(statuses)
+
+	// assert
+	if result.Name() != StatusUnknown().Name() {
+		t.Fail()
+		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusUnknown())
+	}
+}
+
+func Test_calculateGlobalStatus_AllStatusesAreUpToDate_ResultStatusIsUpToDate(t *testing.T) {
+	// arrange
+	statuses := []Status{
+		StatusUpToDate(),
+		StatusUpToDate(),
+		StatusUpToDate(),
+	}
+
+	// act
+	result := calculateGlobalStatus(statuses)
+
+	// assert
+	if result.Name() != StatusUpToDate().Name() {
+		t.Fail()
+		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusUpToDate())
+	}
+}
+
+func Test_calculateGlobalStatus_AllStatusesAreOutdated_ResultStatusIsOutdated(t *testing.T) {
+	// arrange
+	statuses := []Status{
+		StatusOutdated(),
+		StatusOutdated(),
+		StatusOutdated(),
+	}
+
+	// act
+	result := calculateGlobalStatus(statuses)
+
+	// assert
+	if result.Name() != StatusOutdated().Name() {
+		t.Fail()
+		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusOutdated())
+	}
+}

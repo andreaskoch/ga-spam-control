@@ -107,7 +107,47 @@ func calculateGlobalStatus(subStatuses []Status) Status {
 		return StatusUnknown()
 	}
 
-	return StatusError("")
+	// If all statuses are the same, return that.
+	if statusesAreAlike, status := allStatusesAreAlike(subStatuses); statusesAreAlike {
+		return status
+	}
+
+	// If there is a majority, return that.
+	if hasMajority, status := getMajorityStatus(subStatuses); hasMajority {
+		return status
+	}
+
+	return StatusUnknown()
+}
+
+// allStatusesAreAlike checks if all given statuses are the same.
+// Returns true and the status if all statuses are alike.
+// Otherwise false and nil.
+func allStatusesAreAlike(statuses []Status) (bool, Status) {
+	if statuses == nil || len(statuses) == 0 {
+		return false, nil
+	}
+
+	statusUsages := make(map[string]int)
+
+	// build statusUsages statistic
+	for _, status := range statuses {
+		if status == nil {
+			continue
+		}
+
+		if value, exists := statusUsages[status.Name()]; exists {
+			statusUsages[status.Name()] = value + 1
+		} else {
+			statusUsages[status.Name()] = 1
+		}
+	}
+
+	if len(statusUsages) == 1 {
+		return true, statuses[0]
+	}
+
+	return false, nil
 }
 
 // getMajorityNumber returns the number that
