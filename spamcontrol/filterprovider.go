@@ -1,6 +1,7 @@
 package spamcontrol
 
 import "github.com/andreaskoch/ga-spam-control/api"
+import "github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 
 type filterProvider interface {
 	// GetExistingFilters returns a list of all existing api.Filter models
@@ -14,7 +15,7 @@ type filterProvider interface {
 	RemoveFilter(accountID, filterID string) error
 
 	// GetFilterStatus returns the status of the filter for the given account ID.
-	GetFilterStatus(accountID string) Status
+	GetFilterStatus(accountID string) status.Status
 }
 
 type remoteFilterProvider struct {
@@ -57,19 +58,19 @@ func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID stri
 }
 
 // GetFilterStatus returns the status of the filter for the given account ID.
-func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) Status {
+func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) status.Status {
 
 	// get the existing filters
 	existingFilters, existingFilterError := filterProvider.GetExistingFilters(accountID)
 
 	// Status: error (cannot fetch existing filters)
 	if existingFilterError != nil {
-		return StatusError(existingFilterError.Error())
+		return status.Error(existingFilterError.Error())
 	}
 
 	// Status: not-installed
 	if len(existingFilters) == 0 {
-		return StatusNotInstalled()
+		return status.NotInstalled
 	}
 
 	// get the latest filters
@@ -77,14 +78,14 @@ func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) Sta
 
 	// Status: error (cannot determine new filters)
 	if latestFiltersError != nil {
-		return StatusError(latestFiltersError.Error())
+		return status.Error(latestFiltersError.Error())
 	}
 
 	// Status: outdated
 	if len(existingFilters) != len(latestFilters) {
-		return StatusOutdated()
+		return status.Outdated
 	}
 
 	// check content of each filter
-	return StatusUpToDate()
+	return status.Unknown
 }

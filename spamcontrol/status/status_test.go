@@ -1,4 +1,4 @@
-package spamcontrol
+package status
 
 import "testing"
 
@@ -41,47 +41,47 @@ func Test_getMajorityNumber(t *testing.T) {
 func Test_getMajorityStatus_AllStatusesAreError_ErrorStatusIsReturned(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		StatusError("1"),
-		StatusError("2"),
-		StatusError("3"),
+		ErrorDefault,
+		ErrorDefault,
+		ErrorDefault,
 	}
 
 	// act
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if !exists || result.Name() != StatusError("...").Name() {
+	if !exists || result.Name() != ErrorDefault.Name() {
 		t.Fail()
-		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", StatusError("any"), result)
+		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", ErrorDefault, result)
 	}
 }
 
 func Test_getMajorityStatus_MajorityAvailable_MajorIsReturned(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		StatusNotInstalled(),
-		StatusNotInstalled(),
-		StatusNotInstalled(),
-		StatusError("3"),
-		StatusUnknown(),
+		NotInstalled,
+		NotInstalled,
+		NotInstalled,
+		ErrorDefault,
+		Unknown,
 	}
 
 	// act
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if !exists || result.Name() != StatusNotInstalled().Name() {
+	if !exists || result.Name() != NotInstalled.Name() {
 		t.Fail()
-		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", StatusNotInstalled(), result)
+		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", NotInstalled, result)
 	}
 }
 
 func Test_getMajorityStatus_NoMajority_ResultIsFalse(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		StatusError("1"),
-		StatusUnknown(),
-		StatusUpToDate(),
+		ErrorDefault,
+		Unknown,
+		UpToDate,
 	}
 
 	// act
@@ -119,70 +119,70 @@ func Test_getMajorityStatus_Nil_ResultIsFalse(t *testing.T) {
 	}
 }
 
-func Test_calculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
+func Test_CalculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
 	// arrange
 	statuses := []Status{}
 
 	// act
-	result := calculateGlobalStatus(statuses)
+	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != StatusUnknown().Name() {
+	if result.Name() != Unknown.Name() {
 		t.Fail()
-		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusUnknown())
+		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Unknown)
 	}
 }
 
-func Test_calculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T) {
+func Test_CalculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		StatusError("1"),
-		StatusUnknown(),
-		StatusUpToDate(),
+		ErrorDefault,
+		Unknown,
+		UpToDate,
 	}
 
 	// act
-	result := calculateGlobalStatus(statuses)
+	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != StatusUnknown().Name() {
+	if result.Name() != Unknown.Name() {
 		t.Fail()
-		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusUnknown())
+		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Unknown)
 	}
 }
 
-func Test_calculateGlobalStatus_AllStatusesAreUpToDate_ResultStatusIsUpToDate(t *testing.T) {
+func Test_CalculateGlobalStatus_AllStatusesAreUpToDate_ResultStatusIsUpToDate(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		StatusUpToDate(),
-		StatusUpToDate(),
-		StatusUpToDate(),
+		UpToDate,
+		UpToDate,
+		UpToDate,
 	}
 
 	// act
-	result := calculateGlobalStatus(statuses)
+	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != StatusUpToDate().Name() {
+	if result.Name() != UpToDate.Name() {
 		t.Fail()
-		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusUpToDate())
+		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, UpToDate)
 	}
 }
 
-func Test_calculateGlobalStatus_AllStatusesAreOutdated_ResultStatusIsOutdated(t *testing.T) {
+func Test_CalculateGlobalStatus_AllStatusesAreOutdated_ResultStatusIsOutdated(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		StatusOutdated(),
-		StatusOutdated(),
-		StatusOutdated(),
+		Outdated,
+		Outdated,
+		Outdated,
 	}
 
 	// act
-	result := calculateGlobalStatus(statuses)
+	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result.Name() != StatusOutdated().Name() {
+	if result.Name() != Outdated.Name() {
 		t.Fail()
-		t.Logf("calculateGlobalStatus returned %s instead of %s", result, StatusOutdated())
+		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Outdated)
 	}
 }

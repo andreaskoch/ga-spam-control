@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/andreaskoch/ga-spam-control/api"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
 type SpamController interface {
@@ -86,12 +87,12 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	}
 
 	overviewModel := &StateOverview{
-		OverallStatus: StatusUnknown(),
+		OverallStatus: status.Unknown,
 		Accounts:      make([]AccountStatus, 0),
 	}
 
 	// get the status for each account
-	subStatuses := make([]Status, 0, len(accounts))
+	subStatuses := make([]status.Status, 0, len(accounts))
 	for _, account := range accounts {
 
 		status := spamControl.filterProvider.GetFilterStatus(account.ID)
@@ -109,7 +110,7 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	}
 
 	// set the overall status
-	overviewModel.OverallStatus = calculateGlobalStatus(subStatuses)
+	overviewModel.OverallStatus = status.CalculateGlobalStatus(subStatuses)
 
 	return *overviewModel, nil
 }

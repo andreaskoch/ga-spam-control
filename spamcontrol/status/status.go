@@ -1,4 +1,4 @@
-package spamcontrol
+package status
 
 import "math"
 
@@ -18,93 +18,87 @@ type Status interface {
 	Equals(otherStatus Status) bool
 }
 
-type baseStatus struct {
+type statusBase struct {
 	name    string
 	details string
 }
 
 // String returns a string-representation of the Status.
-func (status baseStatus) String() string {
+func (status statusBase) String() string {
 	return status.name
 }
 
 // Name returns the name of the Status.
-func (status baseStatus) Name() string {
+func (status statusBase) Name() string {
 	return status.name
 }
 
 // Details returns the description text of the Status.
-func (status baseStatus) Details() string {
+func (status statusBase) Details() string {
 	return status.details
 }
 
 // Equals check if the current status matches to given Status.
-func (status baseStatus) Equals(otherStatus Status) bool {
+func (status statusBase) Equals(otherStatus Status) bool {
 	return status.Name() == otherStatus.Name()
 }
 
-type Unknown struct {
-	baseStatus
+type StatusUnknown struct {
+	statusBase
 }
 
-type UpToDate struct {
-	baseStatus
+type StatusUpToDate struct {
+	statusBase
 }
 
-type Error struct {
-	baseStatus
+type StatusError struct {
+	statusBase
 }
 
-type Outdated struct {
-	baseStatus
+type StatusOutdated struct {
+	statusBase
 }
 
-type NotInstalled struct {
-	baseStatus
+type StatusNotInstalled struct {
+	statusBase
 }
 
 // StatusUnknown creates a new "unknown" Status instance.
 // This Status type can be used as the default Status.
-func StatusUnknown() Status {
-	return Unknown{baseStatus: baseStatus{"unknown", ""}}
-}
+var Unknown = StatusUnknown{statusBase: statusBase{"unknown", ""}}
 
 // StatusUpToDate creates a new "up-to-date" Status instance.
 // This Status type can be used when all spam-control mechanisms
 // are installed in the latest available version.
-func StatusUpToDate() Status {
-	return UpToDate{baseStatus: baseStatus{"up-to-date", ""}}
-}
+var UpToDate = StatusUpToDate{statusBase: statusBase{"up-to-date", ""}}
 
 // StatusError creates a new "error" Status instance.
 // The given errorMessage will be assigned to the Status.details.
 // This Status type can be used if an error occurred while
 // determining the status.
-func StatusError(errorMessage string) Status {
-	return Error{baseStatus: baseStatus{"error", errorMessage}}
+func Error(errorMessage string) Status {
+	return StatusError{statusBase: statusBase{"error", errorMessage}}
 }
+
+var ErrorDefault = StatusError{statusBase: statusBase{"error", ""}}
 
 // StatusOutdated creates a new "outdated" Status instance.
 // This Status type can be used when all spam-control mechanisms
 // are installed but not in the latest available version.
-func StatusOutdated() Status {
-	return Outdated{baseStatus: baseStatus{"outdated", ""}}
-}
+var Outdated = StatusOutdated{statusBase: statusBase{"outdated", ""}}
 
 // StatusOutdated creates a new "not-installed" Status instance.
 // This Status type can be used when no spam-control mechanisms
 // are installed.
-func StatusNotInstalled() Status {
-	return NotInstalled{baseStatus: baseStatus{"not-installed", ""}}
-}
+var NotInstalled = StatusNotInstalled{statusBase: statusBase{"not-installed", ""}}
 
-// calculateGlobalStatus determines a global status
+// CalculateGlobalStatus determines a global status
 // based on the given sub-statuses.
-func calculateGlobalStatus(subStatuses []Status) Status {
+func CalculateGlobalStatus(subStatuses []Status) Status {
 
 	// Status: unknown
 	if len(subStatuses) == 0 {
-		return StatusUnknown()
+		return Unknown
 	}
 
 	// If all statuses are the same, return that.
@@ -117,7 +111,7 @@ func calculateGlobalStatus(subStatuses []Status) Status {
 		return status
 	}
 
-	return StatusUnknown()
+	return Unknown
 }
 
 // allStatusesAreAlike checks if all given statuses are the same.
