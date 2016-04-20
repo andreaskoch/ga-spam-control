@@ -107,26 +107,31 @@ func (service *GoogleAnalytics) GetProfileUserLinks(accountId string) ([]Profile
 }
 
 // CreateFilter creates a new filter for the given account ID.
-func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) error {
+func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) (Filter, error) {
 
 	buffer := new(bytes.Buffer)
 	serializer := &filterSerializer{}
 	serializeError := serializer.Serialize(buffer, &filter)
 	if serializeError != nil {
-		return fmt.Errorf("The given filter model could not be serialized: %s", serializeError.Error())
+		return Filter{}, fmt.Errorf("The given filter model could not be serialized: %s", serializeError.Error())
 	}
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
 	response, requestError := service.client.Post(uri, "application/json; charset=UTF-8", buffer)
 	if requestError != nil {
-		return fmt.Errorf("The POST request against %q failed: %s", uri, requestError.Error())
+		return Filter{}, fmt.Errorf("The POST request against %q failed: %s", uri, requestError.Error())
 	}
 
 	if err := handleErrors(response); err != nil {
-		return fmt.Errorf("The POST request against %q did not succeed: %s", uri, err.Error())
+		return Filter{}, fmt.Errorf("The POST request against %q did not succeed: %s", uri, err.Error())
 	}
 
-	return nil
+	createdFilter, deserializeError := serializer.Deserialize(response.Body)
+	if deserializeError != nil {
+		return Filter{}, fmt.Errorf("The filters response could not be deserialized: %s", deserializeError.Error())
+	}
+
+	return *createdFilter, nil
 }
 
 // RemoveFilter deletes the given filter from the specified account.

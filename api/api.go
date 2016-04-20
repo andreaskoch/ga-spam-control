@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 	"github.com/andreaskoch/ga-spam-control/api/apiservice"
 )
@@ -14,7 +12,7 @@ type AnalyticsAPI interface {
 	GetAccounts() ([]Account, error)
 
 	// CreateFilter creates a new Filter for the given account ID.
-	CreateFilter(accountID string, filter Filter) error
+	CreateFilter(accountID string, filter Filter) (Filter, error)
 
 	// GetFilters returns all Filter models for the given account.
 	GetFilters(accountID string) ([]Filter, error)
@@ -58,25 +56,19 @@ func (api *API) GetAccounts() ([]Account, error) {
 }
 
 // CreateFilter creates a new Filter for the given account ID.
-func (api *API) CreateFilter(accountID string, filter Filter) error {
+func (api *API) CreateFilter(accountID string, filterParameters Filter) (Filter, error) {
 
-	err := api.service.CreateFilter(accountID, toServiceFilter(filter))
+	serviceFilter, err := api.service.CreateFilter(accountID, toServiceFilter(filterParameters))
 	if err != nil {
-		return err
+		return Filter{}, err
 	}
 
-	return nil
+	createdFilter := toModelFilter(serviceFilter)
+	return createdFilter, nil
 }
 
 // GetFilters returns all Filter models for the given account.
 func (api *API) GetFilters(accountID string) ([]Filter, error) {
-
-	profiles, profilesErr := api.GetProfiles(accountID)
-	if profilesErr != nil {
-		panic(profilesErr)
-	}
-
-	fmt.Println(profiles)
 
 	serviceFilters, err := api.service.GetFilters(accountID)
 	if err != nil {

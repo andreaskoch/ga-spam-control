@@ -11,7 +11,7 @@ type filterProvider interface {
 	GetExistingFilters(accountID string) ([]api.Filter, error)
 
 	// CreateFilter creates the given filter.
-	CreateFilter(accountID string, filter api.Filter) error
+	CreateFilter(accountID string, filter api.Filter) (api.Filter, error)
 
 	// RemoveFilter deletes the given filter from the specified account.
 	RemoveFilter(accountID, filterID string) error
@@ -50,7 +50,7 @@ func (filterProvider remoteFilterProvider) GetExistingFilters(accountID string) 
 }
 
 // CreateFilter creates the given filter.
-func (filterProvider remoteFilterProvider) CreateFilter(accountID string, filter api.Filter) error {
+func (filterProvider remoteFilterProvider) CreateFilter(accountID string, filter api.Filter) (api.Filter, error) {
 	return filterProvider.analyticsAPI.CreateFilter(accountID, filter)
 }
 

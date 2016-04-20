@@ -133,7 +133,7 @@ func (spamControl *SpamControl) Update() error {
 	// create the filters for all accounts
 	for _, account := range accounts {
 		for _, filter := range filters {
-			if createError := spamControl.filterProvider.CreateFilter(account.ID, filter); createError != nil {
+			if _, createError := spamControl.filterProvider.CreateFilter(account.ID, filter); createError != nil {
 				return fmt.Errorf("Failed to create filter for account %q (%s): %s", account.Name, account.ID, createError.Error())
 			}
 		}
