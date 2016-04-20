@@ -84,6 +84,28 @@ func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 	return results.Items, nil
 }
 
+// GetProfileUserLinks returns all profile user links for the account with the given account ID.
+func (service *GoogleAnalytics) GetProfileUserLinks(accountId string) ([]Profile, error) {
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles/%s/entityUserLinks", service.apiHostname, accountId, "~all", "~all")
+	response, requestError := service.client.Get(uri)
+	if requestError != nil {
+		return nil, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
+	}
+
+	if err := handleErrors(response); err != nil {
+		return nil, fmt.Errorf("The GET request against %q did not succeed: %s", uri, err.Error())
+	}
+
+	serializer := &profileResultsSerializer{}
+	results, deserializeError := serializer.Deserialize(response.Body)
+	if deserializeError != nil {
+		return nil, fmt.Errorf("The filters response could not be deserialized: %s", deserializeError.Error())
+	}
+
+	return results.Items, nil
+}
+
 // CreateFilter creates a new filter for the given account ID.
 func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) error {
 

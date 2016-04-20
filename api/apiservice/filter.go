@@ -3,6 +3,7 @@ package apiservice
 import (
 	"encoding/json"
 	"io"
+	"time"
 )
 
 type filterResultsSerializer struct{}
@@ -58,6 +59,10 @@ type FilterDetail struct {
 
 type Filter struct {
 	Item
+	Name           string       `json:"name"`
+	Type           string       `json:"type"`
+	Created        time.Time    `json:"created"`
+	Updated        time.Time    `json:"updated"`
 	AccountID      string       `json:"accountId"`
 	ParentLink     Link         `json:"parentLink"`
 	ExcludeDetails FilterDetail `json:"excludeDetails"`

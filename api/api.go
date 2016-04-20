@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 	"github.com/andreaskoch/ga-spam-control/api/apiservice"
 )
@@ -16,6 +18,9 @@ type AnalyticsAPI interface {
 
 	// GetFilters returns all Filter models for the given account.
 	GetFilters(accountID string) ([]Filter, error)
+
+	// GetProfiles returns all Profile models for the given account.
+	GetProfiles(accountID string) ([]Profile, error)
 
 	// RemoveFilter deletes the given filter from the specified account.
 	RemoveFilter(accountID, filterID string) error
@@ -65,6 +70,14 @@ func (api *API) CreateFilter(accountID string, filter Filter) error {
 
 // GetFilters returns all Filter models for the given account.
 func (api *API) GetFilters(accountID string) ([]Filter, error) {
+
+	profiles, profilesErr := api.GetProfiles(accountID)
+	if profilesErr != nil {
+		panic(profilesErr)
+	}
+
+	fmt.Println(profiles)
+
 	serviceFilters, err := api.service.GetFilters(accountID)
 	if err != nil {
 		return nil, err
@@ -75,6 +88,18 @@ func (api *API) GetFilters(accountID string) ([]Filter, error) {
 	SortFiltersBy(filtersByName).Sort(filters)
 
 	return filters, nil
+}
+
+// GetProfiles returns all Profile models for the given account.
+func (api *API) GetProfiles(accountID string) ([]Profile, error) {
+	serviceProfiles, err := api.service.GetProfileUserLinks(accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	profiles := toModelProfiles(serviceProfiles)
+
+	return profiles, nil
 }
 
 // RemoveFilter deletes the given filter from the specified account.

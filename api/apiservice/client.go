@@ -21,6 +21,8 @@ func getAnalyticsClientConfig(clientId, clientSecret, redirectURL string) *oauth
 			"https://www.googleapis.com/auth/analytics",
 			"https://www.googleapis.com/auth/analytics.edit",
 			"https://www.googleapis.com/auth/analytics.readonly",
+			"https://www.googleapis.com/auth/analytics.manage.users",
+			"https://www.googleapis.com/auth/analytics.manage.users.readonly",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://accounts.google.com/o/oauth2/auth",

@@ -3,6 +3,7 @@ package apiservice
 import (
 	"encoding/json"
 	"io"
+	"time"
 )
 
 type accountResultsSerializer struct{}
@@ -35,6 +36,10 @@ type AccountPermissions struct {
 
 type Account struct {
 	Item
+	Name        string             `json:"name"`
+	Type        string             `json:"type"`
+	Created     time.Time          `json:"created"`
+	Updated     time.Time          `json:"updated"`
 	Permissions AccountPermissions `json:"permissions"`
 	ChildLink   Link               `json:"childLink"`
 }

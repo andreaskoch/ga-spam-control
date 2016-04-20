@@ -39,14 +39,14 @@ func toModelFilter(source apiservice.Filter) Filter {
 // toServiceFilter converts Filter to apiservice.Filter.
 func toServiceFilter(source Filter) apiservice.Filter {
 	return apiservice.Filter{
-		AccountID: source.AccountID,
 		Item: apiservice.Item{
 			ID:       source.ID,
-			Name:     source.Name,
 			Kind:     source.Kind,
-			Type:     source.Type,
 			SelfLink: source.Link,
 		},
+		AccountID: source.AccountID,
+		Name:      source.Name,
+		Type:      source.Type,
 		ExcludeDetails: apiservice.FilterDetail{
 			Kind:            source.ExcludeDetails.Kind,
 			Field:           source.ExcludeDetails.Field,
