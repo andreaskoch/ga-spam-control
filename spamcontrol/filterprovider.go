@@ -1,7 +1,9 @@
 package spamcontrol
 
-import "github.com/andreaskoch/ga-spam-control/api"
-import "github.com/andreaskoch/ga-spam-control/spamcontrol/status"
+import (
+	"github.com/andreaskoch/ga-spam-control/api"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
+)
 
 type filterProvider interface {
 	// GetExistingFilters returns a list of all existing api.Filter models
@@ -87,5 +89,14 @@ func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) sta
 	}
 
 	// check content of each filter
-	return status.Unknown
+	for index, existingFilter := range existingFilters {
+		newFilter := latestFilters[index]
+
+		// Status: outdated
+		if !existingFilter.Equals(newFilter) {
+			return status.Outdated
+		}
+	}
+
+	return status.UpToDate
 }

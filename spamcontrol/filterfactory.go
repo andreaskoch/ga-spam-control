@@ -41,8 +41,9 @@ func (filterFactory spamFilterFactory) GetNewFilters() ([]api.Filter, error) {
 	for index, expressionSegment := range expressionSegments {
 
 		filter := api.Filter{
-			Name: filterFactory.filterNameProvider.GetFilterName(index + 1),
+			Kind: "analytics#filter",
 			Type: "EXCLUDE",
+			Name: filterFactory.filterNameProvider.GetFilterName(index + 1),
 			ExcludeDetails: api.FilterDetail{
 				Kind:            "analytics#filterExpression",
 				Field:           "CAMPAIGN_SOURCE",
