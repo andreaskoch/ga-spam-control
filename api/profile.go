@@ -16,18 +16,17 @@ func toModelProfiles(sources []apiservice.Profile) []Profile {
 // toModelProfile converts a apiservice.Profile model into a Profile model.
 func toModelProfile(source apiservice.Profile) Profile {
 	return Profile{
-		ID:   source.ID,
-		Kind: source.Kind,
-		Link: source.SelfLink,
-		Reference: ProfileReference{
-			Name:                  source.Entity.ProfileRef.Name,
-			ID:                    source.Entity.ProfileRef.ID,
-			Kind:                  source.Entity.ProfileRef.Kind,
-			Href:                  source.Entity.ProfileRef.Href,
-			AccountID:             source.Entity.ProfileRef.AccountID,
-			WebPropertyID:         source.Entity.ProfileRef.WebPropertyID,
-			InternalWebPropertyID: source.Entity.ProfileRef.InternalWebPropertyID,
-		},
+		ID:                    source.ID,
+		Kind:                  source.Kind,
+		Link:                  source.SelfLink,
+		AccountID:             source.AccountID,
+		WebPropertyID:         source.WebPropertyID,
+		InternalWebPropertyID: source.InternalWebPropertyID,
+		Name:       source.Name,
+		Currency:   source.Currency,
+		Timezone:   source.Timezone,
+		WebsiteURL: source.WebsiteURL,
+		Type:       source.Type,
 	}
 }
 
@@ -39,33 +38,28 @@ func toServiceProfile(source Profile) apiservice.Profile {
 			Kind:     source.Kind,
 			SelfLink: source.Link,
 		},
-		Entity: apiservice.ProfileEntity{
-			ProfileRef: apiservice.ProfileReference{
-				Name:                  source.Reference.Name,
-				ID:                    source.Reference.ID,
-				Kind:                  source.Reference.Kind,
-				Href:                  source.Reference.Href,
-				AccountID:             source.Reference.AccountID,
-				WebPropertyID:         source.Reference.WebPropertyID,
-				InternalWebPropertyID: source.Reference.InternalWebPropertyID,
-			},
-		},
+		AccountID:             source.AccountID,
+		WebPropertyID:         source.WebPropertyID,
+		InternalWebPropertyID: source.InternalWebPropertyID,
+		Name:       source.Name,
+		Currency:   source.Currency,
+		Timezone:   source.Timezone,
+		WebsiteURL: source.WebsiteURL,
+		Type:       source.Type,
 	}
 }
 
 type Profile struct {
-	ID        string
-	Kind      string
-	Link      string
-	Reference ProfileReference
-}
+	ID   string
+	Kind string
+	Link string
 
-type ProfileReference struct {
-	ID                    string
-	Kind                  string
-	Href                  string
 	AccountID             string
 	WebPropertyID         string
 	InternalWebPropertyID string
 	Name                  string
+	Currency              string
+	Timezone              string
+	WebsiteURL            string
+	Type                  string
 }

@@ -48,29 +48,14 @@ type ProfileResults struct {
 	Items []Profile `json:"items"`
 }
 
-type ProfileDetail struct {
-	Kind            string `json:"kind"`
-	Field           string `json:"field"`
-	MatchType       string `json:"matchType"`
-	ExpressionValue string `json:"expressionValue"`
-	CaseSensitive   bool   `json:"caseSensitive"`
-}
-
 type Profile struct {
 	Item
-	Entity ProfileEntity `json:"entity"`
-}
-
-type ProfileEntity struct {
-	ProfileRef ProfileReference `json:"profileRef"`
-}
-
-type ProfileReference struct {
-	ID                    string `json:"id"`
-	Kind                  string `json:"kind"`
-	Href                  string `json:"href"`
 	AccountID             string `json:"accountId"`
 	WebPropertyID         string `json:"webPropertyId"`
 	InternalWebPropertyID string `json:"internalWebPropertyId"`
 	Name                  string `json:"name"`
+	Currency              string `json:"currency"`
+	Timezone              string `json:"timezone"`
+	WebsiteURL            string `json:"websiteUrl"`
+	Type                  string `json:"type"`
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 )
@@ -84,10 +85,10 @@ func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 	return results.Items, nil
 }
 
-// GetProfileUserLinks returns all profile user links for the account with the given account ID.
-func (service *GoogleAnalytics) GetProfileUserLinks(accountId string) ([]Profile, error) {
+// GetProfiles returns all profiles for the account with the given account ID.
+func (service *GoogleAnalytics) GetProfiles(accountId string) ([]Profile, error) {
 
-	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles/%s/entityUserLinks", service.apiHostname, accountId, "~all", "~all")
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles", service.apiHostname, accountId, "~all")
 	response, requestError := service.client.Get(uri)
 	if requestError != nil {
 		return nil, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
@@ -134,6 +135,35 @@ func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) (F
 	return *createdFilter, nil
 }
 
+// CreateFilter creates a new filter for the given account ID.
+func (service *GoogleAnalytics) CreateProfileFilterLink(accountId, profileId, webPropertyId, filterId string) error {
+
+	body := fmt.Sprintf(`{
+	"filterRef": {
+		"id": "%s"
+	}
+	}`, filterId)
+
+	reader := strings.NewReader(body)
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles/%s/profileFilterLinks",
+		service.apiHostname,
+		accountId,
+		webPropertyId,
+		profileId,
+	)
+	response, requestError := service.client.Post(uri, "application/json; charset=UTF-8", reader)
+	if requestError != nil {
+		return fmt.Errorf("The POST request against %q failed: %s", uri, requestError.Error())
+	}
+
+	if err := handleErrors(response); err != nil {
+		return fmt.Errorf("The POST request against %q did not succeed: %s", uri, err.Error())
+	}
+
+	return nil
+}
+
 // RemoveFilter deletes the given filter from the specified account.
 func (service *GoogleAnalytics) RemoveFilter(accountID, filterID string) error {
 
@@ -156,6 +186,9 @@ func (service *GoogleAnalytics) RemoveFilter(accountID, filterID string) error {
 	return nil
 }
 
+// handleErrors returns an error if the HTTP code of the response
+// does not indicate success and derailizes the returned error response.
+// If the repsonse is successful, nil will be returned.
 func handleErrors(response *http.Response) error {
 	if response.StatusCode != 200 && response.StatusCode != 204 {
 		errorResponse, decodeError := decodeResponse(response.Body)
