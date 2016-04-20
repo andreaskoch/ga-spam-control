@@ -45,7 +45,11 @@ func (api *API) GetAccounts() ([]Account, error) {
 		return nil, err
 	}
 
-	return toModelAccounts(serviceAccounts), nil
+	accounts := toModelAccounts(serviceAccounts)
+
+	SortAccountsBy(accountsByID).Sort(accounts)
+
+	return accounts, nil
 }
 
 // CreateFilter creates a new Filter for the given account ID.
@@ -66,7 +70,11 @@ func (api *API) GetFilters(accountID string) ([]Filter, error) {
 		return nil, err
 	}
 
-	return toModelFilters(serviceFilters), nil
+	filters := toModelFilters(serviceFilters)
+
+	SortFiltersBy(filtersByName).Sort(filters)
+
+	return filters, nil
 }
 
 // RemoveFilter deletes the given filter from the specified account.

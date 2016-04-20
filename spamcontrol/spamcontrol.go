@@ -18,7 +18,7 @@ func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 
 	accountProvider := remoteAccountProvider{analyticsAPI}
 
-	domainProvider := &remoteSpamDomainProvider{}
+	domainProvider := &remoteSpamDomainProvider{"https://raw.githubusercontent.com/ddofborg/analytics-ghost-spam-list/master/adwordsrobot.com-spam-list.txt"}
 	filterNameProvider := &spamFilterNameProvider{"ga-spam-control"}
 
 	filterFactory := &spamFilterFactory{

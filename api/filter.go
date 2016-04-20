@@ -1,6 +1,10 @@
 package api
 
-import "github.com/andreaskoch/ga-spam-control/api/apiservice"
+import (
+	"sort"
+
+	"github.com/andreaskoch/ga-spam-control/api/apiservice"
+)
 
 // toModelFilters converts []apiservice.Filter to []Filter.
 func toModelFilters(sources []apiservice.Filter) []Filter {
@@ -115,4 +119,37 @@ func (details FilterDetail) Equals(other FilterDetail) bool {
 	}
 
 	return true
+}
+
+// filtersByName can be used to sort filters by name (ascending).
+func filtersByName(filter1, filter2 Filter) bool {
+	return filter1.Name < filter2.Name
+}
+
+type SortFiltersBy func(filter1, filter2 Filter) bool
+
+func (by SortFiltersBy) Sort(filters []Filter) {
+	sorter := &filterSorter{
+		filters: filters,
+		by:      by,
+	}
+
+	sort.Sort(sorter)
+}
+
+type filterSorter struct {
+	filters []Filter
+	by      SortFiltersBy
+}
+
+func (sorter *filterSorter) Len() int {
+	return len(sorter.filters)
+}
+
+func (sorter *filterSorter) Swap(i, j int) {
+	sorter.filters[i], sorter.filters[j] = sorter.filters[j], sorter.filters[i]
+}
+
+func (sorter *filterSorter) Less(i, j int) bool {
+	return sorter.by(sorter.filters[i], sorter.filters[j])
 }
