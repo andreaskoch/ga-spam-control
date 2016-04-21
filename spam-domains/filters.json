@@ -1,0 +1,135 @@
+{
+  "kind": "analytics#filters",
+  "username": "johndoe@example.com",
+  "totalResults": 49,
+  "startIndex": 1,
+  "itemsPerPage": 1000,
+  "items": [
+    {
+      "id": "19995876",
+      "kind": "analytics#filter",
+      "selfLink": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX/filters/19995876",
+      "accountId": "XXXXXXXX",
+      "name": "Exclude Spam",
+      "type": "EXCLUDE",
+      "created": "2015-05-24T12:13:39.307Z",
+      "updated": "2015-06-30T17:54:10.112Z",
+      "parentLink": {
+        "type": "analytics#account",
+        "href": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX"
+      },
+      "excludeDetails": {
+        "kind": "analytics#filterExpression",
+        "field": "CAMPAIGN_SOURCE",
+        "matchType": "MATCHES",
+        "expressionValue": "theguardlan\\.com|buttons-for-your-website\\.com|free-share-buttons\\.com|free-social-buttons\\.com|www\\.Get-Free-Traffic-Now\\.com|www\\.event-tracking\\.com|www\\.fiverr\\.com|ilovevitaly\\.com|best-seo-offer\\.com|sanjosestartups\\.com",
+        "caseSensitive": false
+      }
+    },
+    {
+      "id": "20585886",
+      "kind": "analytics#filter",
+      "selfLink": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX/filters/20585886",
+      "accountId": "XXXXXXXX",
+      "name": "Exlude Spam keywords",
+      "type": "EXCLUDE",
+      "created": "2015-06-11T17:39:16.922Z",
+      "updated": "2015-06-30T17:53:53.465Z",
+      "parentLink": {
+        "type": "analytics#account",
+        "href": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX"
+      },
+      "excludeDetails": {
+        "kind": "analytics#filterExpression",
+        "field": "INTERNAL_SEARCH_TERM",
+        "matchType": "MATCHES",
+        "expressionValue": "theguardlan\\.com|buttons-for-your-website\\.com|free-share-buttons\\.com|free-social-buttons\\.com|www\\.Get-Free-Traffic-Now\\.com|www\\.event-tracking\\.com|www\\.fiverr\\.com|ilovevitaly\\.com|best-seo-offer\\.com|sanjosestartups\\.com",
+        "caseSensitive": false
+      }
+    },
+    {
+      "id": "20587349",
+      "kind": "analytics#filter",
+      "selfLink": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX/filters/20587349",
+      "accountId": "XXXXXXXX",
+      "name": "Exclude Spam 2",
+      "type": "EXCLUDE",
+      "created": "2015-06-11T17:32:42.751Z",
+      "updated": "2015-07-15T15:59:48.457Z",
+      "parentLink": {
+        "type": "analytics#account",
+        "href": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX"
+      },
+      "excludeDetails": {
+        "kind": "analytics#filterExpression",
+        "field": "CAMPAIGN_SOURCE",
+        "matchType": "MATCHES",
+        "expressionValue": "100dollars-seo\\.com|howtostopreferralspam\\.eu",
+        "caseSensitive": false
+      }
+    },
+    {
+      "id": "20591600",
+      "kind": "analytics#filter",
+      "selfLink": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX/filters/20591600",
+      "accountId": "XXXXXXXX",
+      "name": "Exclude Spam Keywords 2",
+      "type": "EXCLUDE",
+      "created": "2015-06-11T17:39:44.477Z",
+      "updated": "2015-06-11T17:39:44.477Z",
+      "parentLink": {
+        "type": "analytics#account",
+        "href": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX"
+      },
+      "excludeDetails": {
+        "kind": "analytics#filterExpression",
+        "field": "INTERNAL_SEARCH_TERM",
+        "matchType": "MATCHES",
+        "expressionValue": "100dollars-seo\\.com|howtostopreferralspam\\.eu|непереводимая\\.рф",
+        "caseSensitive": false
+      }
+    },
+    {
+      "id": "21135778",
+      "kind": "analytics#filter",
+      "selfLink": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX/filters/21135778",
+      "accountId": "XXXXXXXX",
+      "name": "Exclude Spam 3",
+      "type": "EXCLUDE",
+      "created": "2015-06-30T17:53:05.281Z",
+      "updated": "2016-04-14T07:12:39.549Z",
+      "parentLink": {
+        "type": "analytics#account",
+        "href": "https://www.googleapis.com/analytics/v3/management/accounts/XXXXXXXX"
+      },
+      "excludeDetails": {
+        "kind": "analytics#filterExpression",
+        "field": "CAMPAIGN_SOURCE",
+        "matchType": "MATCHES",
+        "expressionValue": "videos\\-for\\-your\\-business\\.com|success\\-seo\\.com|buttons\\-for\\-website\\.com|video\\-\\-production\\.com|alibestsale\\.com|copyrightclaims\\.org|traffic2cash\\.xyz|share\\-buttons|keywords\\-monitoring\\-your\\-success\\.com",
+        "caseSensitive": false
+      }
+    },
+    {
+      "id": "19993896",
+      "kind": "analytics#filter",
+      "selfLink": "https://www.googleapis.com/analytics/v3/management/accounts/63064808/filters/19993896",
+      "accountId": "63064808",
+      "name": "Exclude Spam",
+      "type": "EXCLUDE",
+      "created": "2015-05-24T12:12:53.063Z",
+      "updated": "2015-05-24T12:12:53.063Z",
+      "parentLink": {
+        "type": "analytics#account",
+        "href": "https://www.googleapis.com/analytics/v3/management/accounts/63064808"
+      },
+      "excludeDetails": {
+        "kind": "analytics#filterExpression",
+        "field": "CAMPAIGN_SOURCE",
+        "matchType": "MATCHES",
+        "expressionValue": "theguardlan\\.com|buttons-for-your-website\\.com|free-share-buttons\\.com|free-social-buttons\\.com|www\\.Get-Free-Traffic-Now\\.com|www\\.event-tracking\\.com|www\\.fiverr\\.com|ilovevitaly\\.com|best-seo-offer\\.com",
+        "caseSensitive": false
+      }
+    }
+  ]
+}
