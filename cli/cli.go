@@ -21,7 +21,7 @@ func main() {
 // handleCommandlineArguments parses the given arguments
 // and performs the selected action.
 func handleCommandlineArguments(args []string) {
-	app := kingpin.New("ga-spam-control", "Command-line utility for blocking referer spam from your Google Analytics accounts")
+	app := kingpin.New("ga-spam-control", "Command-line utility for blocking referrer spam from your Google Analytics accounts")
 	app.Version("0.0.1")
 
 	status := app.Command("status", "Display the current spam control status of your accounts")

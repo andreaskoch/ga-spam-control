@@ -31,7 +31,7 @@ func Test_GetNewFilters_NoDomains_NoFilters(t *testing.T) {
 
 func Test_GetNewFilters_ValidDomains_FilterIsReturned(t *testing.T) {
 	// arrange
-	domains := []string{"referer-spam.com", "referer-spam.co.uk"}
+	domains := []string{"referrer-spam.com", "referrer-spam.co.uk"}
 	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
 		domainProvider:       spamDomainProvider,
@@ -50,7 +50,7 @@ func Test_GetNewFilters_ValidDomains_FilterIsReturned(t *testing.T) {
 
 func Test_GetNewFilters_ValidDomains_FilterExpressionValueIsCorrect(t *testing.T) {
 	// arrange
-	domains := []string{"referer-spam.com", "referer-spam.co.uk"}
+	domains := []string{"referrer-spam.com", "referrer-spam.co.uk"}
 	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
 		domainProvider:       spamDomainProvider,
@@ -63,7 +63,7 @@ func Test_GetNewFilters_ValidDomains_FilterExpressionValueIsCorrect(t *testing.T
 
 	// assert
 	filter := filters[0]
-	if filter.ExcludeDetails.ExpressionValue != `referer-spam\.com|referer-spam\.co\.uk` {
+	if filter.ExcludeDetails.ExpressionValue != `referrer-spam\.com|referrer-spam\.co\.uk` {
 		t.Fail()
 		t.Logf("The expression value is invalid: %#v", filter)
 	}
@@ -71,7 +71,7 @@ func Test_GetNewFilters_ValidDomains_FilterExpressionValueIsCorrect(t *testing.T
 
 func Test_GetNewFilters_ValidDomains_FilterNameIsCorrect(t *testing.T) {
 	// arrange
-	domains := []string{"referer-spam.com", "referer-spam.co.uk"}
+	domains := []string{"referrer-spam.com", "referrer-spam.co.uk"}
 	spamDomainProvider := &dummyDomainProvider{domains}
 	filterFactory := spamFilterFactory{
 		domainProvider:       spamDomainProvider,

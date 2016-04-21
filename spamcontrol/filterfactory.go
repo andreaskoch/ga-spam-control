@@ -25,7 +25,7 @@ func (filterFactory spamFilterFactory) GetNewFilters() ([]api.Filter, error) {
 
 	filters := make([]api.Filter, 0)
 
-	// get the latest referer spam domain names
+	// get the latest referrer spam domain names
 	domainNames, domainNameError := filterFactory.domainProvider.GetSpamDomains()
 	if domainNameError != nil {
 		return nil, domainNameError
