@@ -19,7 +19,7 @@ type filterProvider interface {
 	RemoveFilter(accountID, filterID string) error
 
 	// GetFilterStatus returns the status of the filter for the given account ID.
-	GetFilterStatus(accountID string) status.Status
+	GetFilterStatus(accountID string) (status.Status, error)
 }
 
 type remoteFilterProvider struct {
@@ -62,63 +62,28 @@ func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID stri
 }
 
 // GetFilterStatus returns the status of the filter for the given account ID.
-func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) status.Status {
+func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) (status.Status, error) {
 
 	// get the existing filters
 	existingFilters, existingFilterError := filterProvider.GetExistingFilters(accountID)
-
-	// Status: error (cannot fetch existing filters)
 	if existingFilterError != nil {
-		return status.Error
-	}
-
-	// Status: not-installed
-	if len(existingFilters) == 0 {
-		return status.NotInstalled
+		return status.Unknown, existingFilterError
 	}
 
 	// get the latest filters
 	latestFilters, latestFiltersError := filterProvider.filterFactory.GetNewFilters()
-
-	// Status: error (cannot determine new filters)
 	if latestFiltersError != nil {
-		return status.Error
+		return status.Unknown, latestFiltersError
 	}
 
-	// Status: outdated
-	if len(existingFilters) != len(latestFilters) {
-		return status.Outdated
-	}
-
-	// check content of each filter
-	for index, existingFilter := range existingFilters {
-		newFilter := latestFilters[index]
-
-		// Status: outdated
-		if !existingFilter.Equals(newFilter) {
-			return status.Outdated
-		}
-	}
-
-	return status.UpToDate
+	filterStatuses := getFilterStatuses(existingFilters, latestFilters)
+	return filterStatuses.OverallStatus(), nil
 }
 
-// GetFilterStatus returns the status of the filter for the given account ID.
-func (filterProvider remoteFilterProvider) getFilterStatuses(accountID string) (FilterStatuses, error) {
+// getFilterStatuses returns an overview of the Status of all given filters.
+func getFilterStatuses(existingFilters, latestFilters []api.Filter) FilterStatuses {
 
 	statuses := make(FilterStatuses, 0)
-
-	// get the existing filters
-	existingFilters, existingFilterError := filterProvider.GetExistingFilters(accountID)
-	if existingFilterError != nil {
-		return statuses, existingFilterError
-	}
-
-	// get the latest filters
-	latestFilters, latestFiltersError := filterProvider.filterFactory.GetNewFilters()
-	if latestFiltersError != nil {
-		return statuses, latestFiltersError
-	}
 
 	// create an index
 	oldFilters := getFilterNameMap(existingFilters)
@@ -154,7 +119,7 @@ func (filterProvider remoteFilterProvider) getFilterStatuses(accountID string) (
 		statuses = append(statuses, newFilterStatus(newFilter, status.NotInstalled))
 	}
 
-	return statuses, nil
+	return statuses
 }
 
 func getFilterNameMap(filters []api.Filter) map[string]api.Filter {
@@ -167,6 +132,15 @@ func getFilterNameMap(filters []api.Filter) map[string]api.Filter {
 }
 
 type FilterStatuses []FilterStatus
+
+func (filterStatuses FilterStatuses) OverallStatus() status.Status {
+	statuses := make([]status.Status, 0)
+	for _, filterStatus := range filterStatuses {
+		statuses = append(statuses, filterStatus.Status())
+	}
+
+	return status.CalculateGlobalStatus(statuses)
+}
 
 // newFilterStatus creates a new FilterStatus instance.
 func newFilterStatus(filter api.Filter, status status.Status) FilterStatus {
