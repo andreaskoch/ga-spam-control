@@ -2,6 +2,7 @@ package spamcontrol
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/andreaskoch/ga-spam-control/api"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
@@ -142,6 +143,9 @@ func getFilterStatuses(existingFilters, latestFilters []api.Filter) FilterStatus
 		statuses = append(statuses, newFilterStatus(newFilter, status.NotInstalled))
 	}
 
+	// sort
+	SortFiltersBy(filterStatusesByName).Sort(statuses)
+
 	return statuses
 }
 
@@ -185,4 +189,37 @@ func (filterStatus FilterStatus) Filter() api.Filter {
 
 func (filterStatus FilterStatus) Status() status.Status {
 	return filterStatus.status
+}
+
+// filterStatusesByName can be used to sort filterStatuses by name (ascending).
+func filterStatusesByName(filterStatus1, filterStatus2 FilterStatus) bool {
+	return filterStatus1.Filter().Name < filterStatus2.Filter().Name
+}
+
+type SortFiltersBy func(filter1, filter2 FilterStatus) bool
+
+func (by SortFiltersBy) Sort(filterStatuses []FilterStatus) {
+	sorter := &filterStatusSorter{
+		filterStatuses: filterStatuses,
+		by:             by,
+	}
+
+	sort.Sort(sorter)
+}
+
+type filterStatusSorter struct {
+	filterStatuses []FilterStatus
+	by             SortFiltersBy
+}
+
+func (sorter *filterStatusSorter) Len() int {
+	return len(sorter.filterStatuses)
+}
+
+func (sorter *filterStatusSorter) Swap(i, j int) {
+	sorter.filterStatuses[i], sorter.filterStatuses[j] = sorter.filterStatuses[j], sorter.filterStatuses[i]
+}
+
+func (sorter *filterStatusSorter) Less(i, j int) bool {
+	return sorter.by(sorter.filterStatuses[i], sorter.filterStatuses[j])
 }
