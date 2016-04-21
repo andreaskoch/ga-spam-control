@@ -21,8 +21,11 @@ type filterProvider interface {
 	// RemoveFilter deletes the given filter from the specified account.
 	RemoveFilter(accountID, filterID string) error
 
-	// GetAccountStatus returns the status of the filter for the given account ID.
+	// GetAccountStatus returns the overall status for the given account ID.
 	GetAccountStatus(accountID string) (status.Status, error)
+
+	// GetFilterStatuses returns the individual filter statuses for the given account.
+	GetFilterStatuses(accountID string) (FilterStatuses, error)
 }
 
 type remoteFilterProvider struct {
@@ -72,20 +75,30 @@ func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID stri
 // GetAccountStatus returns the status of for the given account ID.
 func (filterProvider remoteFilterProvider) GetAccountStatus(accountID string) (status.Status, error) {
 
+	filterStatuses, filterStatusError := filterProvider.GetFilterStatuses(accountID)
+	if filterStatusError != nil {
+		return status.NotSet, filterStatusError
+	}
+
+	return filterStatuses.OverallStatus(), nil
+}
+
+// GetFilterStatuses returns the individual filter statuses for the given account.
+func (filterProvider remoteFilterProvider) GetFilterStatuses(accountID string) (FilterStatuses, error) {
 	// get the existing filters
 	existingFilters, existingFilterError := filterProvider.GetExistingFilters(accountID)
 	if existingFilterError != nil {
-		return status.Unknown, existingFilterError
+		return nil, existingFilterError
 	}
 
 	// get the latest filters
 	latestFilters, latestFiltersError := filterProvider.filterFactory.GetNewFilters()
 	if latestFiltersError != nil {
-		return status.Unknown, latestFiltersError
+		return nil, latestFiltersError
 	}
 
 	filterStatuses := getFilterStatuses(existingFilters, latestFilters)
-	return filterStatuses.OverallStatus(), nil
+	return filterStatuses, nil
 }
 
 // getFilterStatuses returns an overview of the Status of all given filters.
@@ -108,7 +121,9 @@ func getFilterStatuses(existingFilters, latestFilters []api.Filter) FilterStatus
 			}
 
 			// Status: outdated
-			statuses = append(statuses, newFilterStatus(oldFilter, status.Outdated))
+			updateFilter := newFilter
+			updateFilter.ID = oldFilter.ID
+			statuses = append(statuses, newFilterStatus(updateFilter, status.Outdated))
 			continue
 		}
 

@@ -87,7 +87,7 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	}
 
 	overviewModel := &StateOverview{
-		OverallStatus: status.Unknown,
+		OverallStatus: status.NotSet,
 		Accounts:      make([]AccountStatus, 0),
 	}
 
@@ -122,12 +122,6 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 // Update creates or updates spam-control filters for all accounts.
 func (spamControl *SpamControl) Update() error {
 
-	// create new filters for the given domain names
-	filters, filterError := spamControl.filterFactory.GetNewFilters()
-	if filterError != nil {
-		return filterError
-	}
-
 	// get all available accounts
 	accounts, accountsError := spamControl.accountProvider.GetAccounts()
 	if accountsError != nil {
@@ -136,11 +130,52 @@ func (spamControl *SpamControl) Update() error {
 
 	// create the filters for all accounts
 	for _, account := range accounts {
-		for _, filter := range filters {
-			if _, createError := spamControl.filterProvider.CreateFilter(account.ID, filter); createError != nil {
-				return fmt.Errorf("Failed to create filter for account %q (%s): %s", account.Name, account.ID, createError.Error())
-			}
+
+		filterStatuses, filterStatusError := spamControl.filterProvider.GetFilterStatuses(account.ID)
+		if filterStatusError != nil {
+			return filterStatusError
 		}
+
+		for _, filterStatus := range filterStatuses {
+
+			// ignore up-to-date filters
+			if filterStatus.Status() == status.UpToDate {
+				continue
+			}
+
+			// remove obsolete filters
+			if filterStatus.Status() == status.Obsolete {
+				removeError := spamControl.filterProvider.RemoveFilter(account.ID, filterStatus.Filter().ID)
+				if removeError != nil {
+					return removeError
+				}
+
+				continue
+			}
+
+			// update outdated filters
+			if filterStatus.Status() == status.Outdated {
+				_, updateError := spamControl.filterProvider.UpdateFilter(account.ID, filterStatus.Filter().ID, filterStatus.Filter())
+				if updateError != nil {
+					return updateError
+				}
+
+				continue
+			}
+
+			// create new filters
+			if filterStatus.Status() == status.NotInstalled {
+				_, createError := spamControl.filterProvider.CreateFilter(account.ID, filterStatus.Filter())
+				if createError != nil {
+					return createError
+				}
+
+				continue
+			}
+
+			return fmt.Errorf("Cannot update filter %q. Status %q cannot be handled.", filterStatus.Filter().Name, filterStatus.Status())
+		}
+
 	}
 
 	return nil

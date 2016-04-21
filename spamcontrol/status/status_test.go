@@ -38,21 +38,21 @@ func Test_getMajorityNumber(t *testing.T) {
 
 }
 
-func Test_getMajorityStatus_AllStatusesAreError_ErrorStatusIsReturned(t *testing.T) {
+func Test_getMajorityStatus_AllStatusesAreNotSet_NotSetStatusIsReturned(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		Error,
-		Error,
-		Error,
+		NotSet,
+		NotSet,
+		NotSet,
 	}
 
 	// act
 	exists, result := getMajorityStatus(statuses)
 
 	// assert
-	if !exists || result != Error {
+	if !exists || result != NotSet {
 		t.Fail()
-		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", Error, result)
+		t.Logf("getMajorityStatus should have returned %q but returned %q instead.", NotSet, result)
 	}
 }
 
@@ -62,8 +62,8 @@ func Test_getMajorityStatus_MajorityAvailable_MajorIsReturned(t *testing.T) {
 		NotInstalled,
 		NotInstalled,
 		NotInstalled,
-		Error,
-		Unknown,
+		NotSet,
+		NotSet,
 	}
 
 	// act
@@ -79,8 +79,8 @@ func Test_getMajorityStatus_MajorityAvailable_MajorIsReturned(t *testing.T) {
 func Test_getMajorityStatus_NoMajority_ResultIsFalse(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		Error,
-		Unknown,
+		NotSet,
+		Outdated,
 		UpToDate,
 	}
 
@@ -119,7 +119,7 @@ func Test_getMajorityStatus_Nil_ResultIsFalse(t *testing.T) {
 	}
 }
 
-func Test_CalculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
+func Test_CalculateGlobalStatus_EmptyList_ResultStatusIsNotSet(t *testing.T) {
 	// arrange
 	statuses := []Status{}
 
@@ -127,17 +127,17 @@ func Test_CalculateGlobalStatus_EmptyList_ResultStatusIsUnknown(t *testing.T) {
 	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result != Unknown {
+	if result != NotSet {
 		t.Fail()
-		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Unknown)
+		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, NotSet)
 	}
 }
 
-func Test_CalculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T) {
+func Test_CalculateGlobalStatus_MixedStatuses_ResultStatusIsNotSet(t *testing.T) {
 	// arrange
 	statuses := []Status{
-		Error,
-		Unknown,
+		NotSet,
+		NotSet,
 		UpToDate,
 	}
 
@@ -145,9 +145,9 @@ func Test_CalculateGlobalStatus_MixedStatuses_ResultStatusIsUnknown(t *testing.T
 	result := CalculateGlobalStatus(statuses)
 
 	// assert
-	if result != Unknown {
+	if result != NotSet {
 		t.Fail()
-		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, Unknown)
+		t.Logf("CalculateGlobalStatus returned %s instead of %s", result, NotSet)
 	}
 }
 

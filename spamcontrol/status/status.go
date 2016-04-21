@@ -4,9 +4,7 @@ import "math"
 
 const (
 	NotSet Status = 1 + iota
-	Unknown
 	UpToDate
-	Error
 	Outdated
 	NotInstalled
 	Obsolete
@@ -14,9 +12,7 @@ const (
 
 var labels = []string{
 	"not set",
-	"unknown",
 	"up-to-date",
-	"error",
 	"outdated",
 	"not installed",
 	"obsolete",
@@ -34,7 +30,7 @@ func CalculateGlobalStatus(subStatuses []Status) Status {
 
 	// Status: unknown
 	if len(subStatuses) == 0 {
-		return Unknown
+		return NotSet
 	}
 
 	// If all statuses are the same, return that.
@@ -47,7 +43,7 @@ func CalculateGlobalStatus(subStatuses []Status) Status {
 		return status
 	}
 
-	return Unknown
+	return NotSet
 }
 
 // allStatusesAreAlike checks if all given statuses are the same.
