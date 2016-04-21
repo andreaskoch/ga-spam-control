@@ -67,6 +67,11 @@ make install
 make crosscompile
 ```
 
+## Licensing
+
+ga-spam-control is licensed under the Apache License, Version 2.0.
+See [LICENSE](LICENSE) for the full license text.
+
 ## Related Resources
 
 ### Referrer Spam
