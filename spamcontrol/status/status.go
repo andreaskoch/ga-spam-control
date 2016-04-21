@@ -9,6 +9,7 @@ const (
 	Error
 	Outdated
 	NotInstalled
+	Obsolete
 )
 
 var labels = []string{
@@ -18,6 +19,7 @@ var labels = []string{
 	"error",
 	"outdated",
 	"not installed",
+	"obsolete",
 }
 
 type Status int
