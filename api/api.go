@@ -14,6 +14,9 @@ type AnalyticsAPI interface {
 	// CreateFilter creates a new Filter for the given account ID.
 	CreateFilter(accountID string, filter Filter) (Filter, error)
 
+	// UpdateFilter updates the given filter.
+	UpdateFilter(accountID string, filterID string, filter Filter) (Filter, error)
+
 	// GetFilters returns all Filter models for the given account.
 	GetFilters(accountID string) ([]Filter, error)
 
@@ -107,6 +110,17 @@ func (api *API) GetProfiles(accountID string) ([]Profile, error) {
 	profiles := toModelProfiles(serviceProfiles)
 
 	return profiles, nil
+}
+
+// UpdateFilter updates the given filter.
+func (api *API) UpdateFilter(accountID string, filterID string, filterParameters Filter) (Filter, error) {
+
+	serviceFilter, err := api.service.UpdateFilter(accountID, filterID, toServiceFilter(filterParameters))
+	if err != nil {
+		return Filter{}, err
+	}
+
+	return toModelFilter(serviceFilter), nil
 }
 
 // RemoveFilter deletes the given filter from the specified account.

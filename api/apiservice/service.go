@@ -64,9 +64,9 @@ func (service *GoogleAnalytics) GetAccounts() ([]Account, error) {
 }
 
 // GetFilters returns all filters for the account with the given account ID.
-func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
+func (service *GoogleAnalytics) GetFilters(accountID string) ([]Filter, error) {
 
-	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountID)
 	response, requestError := service.client.Get(uri)
 	if requestError != nil {
 		return nil, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
@@ -86,9 +86,9 @@ func (service *GoogleAnalytics) GetFilters(accountId string) ([]Filter, error) {
 }
 
 // GetProfiles returns all profiles for the account with the given account ID.
-func (service *GoogleAnalytics) GetProfiles(accountId string) ([]Profile, error) {
+func (service *GoogleAnalytics) GetProfiles(accountID string) ([]Profile, error) {
 
-	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles", service.apiHostname, accountId, "~all")
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles", service.apiHostname, accountID, "~all")
 	response, requestError := service.client.Get(uri)
 	if requestError != nil {
 		return nil, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
@@ -108,7 +108,7 @@ func (service *GoogleAnalytics) GetProfiles(accountId string) ([]Profile, error)
 }
 
 // CreateFilter creates a new filter for the given account ID.
-func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) (Filter, error) {
+func (service *GoogleAnalytics) CreateFilter(accountID string, filter Filter) (Filter, error) {
 
 	buffer := new(bytes.Buffer)
 	serializer := &filterSerializer{}
@@ -117,7 +117,7 @@ func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) (F
 		return Filter{}, fmt.Errorf("The given filter model could not be serialized: %s", serializeError.Error())
 	}
 
-	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountId)
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", service.apiHostname, accountID)
 	response, requestError := service.client.Post(uri, "application/json; charset=UTF-8", buffer)
 	if requestError != nil {
 		return Filter{}, fmt.Errorf("The POST request against %q failed: %s", uri, requestError.Error())
@@ -136,7 +136,7 @@ func (service *GoogleAnalytics) CreateFilter(accountId string, filter Filter) (F
 }
 
 // CreateFilter creates a new filter for the given account ID.
-func (service *GoogleAnalytics) CreateProfileFilterLink(accountId, profileId, webPropertyId, filterId string) error {
+func (service *GoogleAnalytics) CreateProfileFilterLink(accountID, profileId, webPropertyId, filterId string) error {
 
 	body := fmt.Sprintf(`{
 	"filterRef": {
@@ -148,7 +148,7 @@ func (service *GoogleAnalytics) CreateProfileFilterLink(accountId, profileId, we
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles/%s/profileFilterLinks",
 		service.apiHostname,
-		accountId,
+		accountID,
 		webPropertyId,
 		profileId,
 	)
@@ -162,6 +162,40 @@ func (service *GoogleAnalytics) CreateProfileFilterLink(accountId, profileId, we
 	}
 
 	return nil
+}
+
+// UpdateFilter updates the given filter.
+func (service *GoogleAnalytics) UpdateFilter(accountID string, filterID string, filter Filter) (Filter, error) {
+
+	buffer := new(bytes.Buffer)
+	serializer := &filterSerializer{}
+	serializeError := serializer.Serialize(buffer, &filter)
+	if serializeError != nil {
+		return Filter{}, fmt.Errorf("The given filter model could not be serialized: %s", serializeError.Error())
+	}
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters/%s", service.apiHostname, accountID, filterID)
+	request, createRequestError := http.NewRequest(http.MethodPut, uri, buffer)
+	if createRequestError != nil {
+		return Filter{}, fmt.Errorf("The PUT request could not be created: %s", createRequestError.Error())
+	}
+
+	response, requestError := service.client.Do(request)
+	if requestError != nil {
+		return Filter{}, fmt.Errorf("The PUT request against %q failed: %s", uri, requestError.Error())
+	}
+
+	if err := handleErrors(response); err != nil {
+		return Filter{}, fmt.Errorf("The POST request against %q did not succeed: %s", uri, err.Error())
+	}
+
+	createdFilter, deserializeError := serializer.Deserialize(response.Body)
+	if deserializeError != nil {
+		return Filter{}, fmt.Errorf("The filters response could not be deserialized: %s", deserializeError.Error())
+	}
+
+	return *createdFilter, nil
+
 }
 
 // RemoveFilter deletes the given filter from the specified account.
