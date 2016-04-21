@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreaskoch/ga-spam-control/api"
 	"github.com/andreaskoch/ga-spam-control/cli/templates"
+	"github.com/andreaskoch/ga-spam-control/cli/token"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol"
 	"github.com/mitchellh/go-homedir"
 
@@ -87,7 +88,7 @@ func newCLI() (*cli, error) {
 	}
 
 	tokenStoreFilePath := filepath.Join(homeDirPath, ".ga-spam-control")
-	tokenStore := newTokenStore(tokenStoreFilePath)
+	tokenStore := token.NewTokenStore(tokenStoreFilePath)
 
 	// create a new analytis API instance
 	googleAnalyticsClientID := "367149948041-v2up5mcsv4a415gm9rmmmli5lifucddr.apps.googleusercontent.com"

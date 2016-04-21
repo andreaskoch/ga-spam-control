@@ -1,1 +1,3 @@
-google-analtics-spam-filter-manager
+bin
+coverage.out
+coverage.html

@@ -1,4 +1,4 @@
-package main
+package token
 
 import (
 	"os"
@@ -6,9 +6,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// newTokenStore creates a new token store instance that uses
+// NewTokenStore creates a new token store instance that uses
 // the given file path to read and store API tokens.
-func newTokenStore(credentialFilePath string) filesystemTokenStore {
+func NewTokenStore(credentialFilePath string) filesystemTokenStore {
 	return filesystemTokenStore{
 		credentialFilePath,
 		tokenSerializer{},

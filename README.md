@@ -49,6 +49,24 @@ If you permit the requested rights the authentication token will be stored in yo
 
 To sign out you can either delete the file or de-authorize the "Google Analytics Spam Control" app in your Google App Permissions at https://security.google.com/settings/security/permissions.
 
+## Installation
+
+The command-line package is [github.com/andreaskoch/ga-spam-control/cli](cli/main.go). You can clone the repository or install it with `go get github.com/andreaskoch/ga-spam-control` and then run the make script:
+
+```bash
+go run make.go -test
+go run make.go -install
+go run make.go -crosscompile
+```
+
+or
+
+```
+make test
+make install
+make crosscompile
+```
+
 ## Related Resources
 
 ### Referrer Spam
