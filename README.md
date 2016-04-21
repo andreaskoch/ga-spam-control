@@ -5,6 +5,19 @@ Command-line utility for blocking referrer spam from your Google Analytics accou
 Google Analytics [referrer spam](https://en.wikipedia.org/wiki/Referer_spam) is pain.
 **ga-spam-control** is a small command-line utility that helps you to keep your Google Analytics spam filters up-to-date.
 
+## Features
+
+**ga-spam-control** fetches the latest list of referrer spam domains from [github.com/ddofborg/analytics-ghost-spam-list](https://github.com/ddofborg/analytics-ghost-spam-list) and creates or updates filters in your Google Analytics accounts that prevent any of these spam domains from reaching your analytics reports.
+
+The command line utility provides the following actions:
+
+1. Action: **status**
+Display the spam-control status of all your account
+2. Action: **update**
+Create or update spam control filters for all your accounts
+3. Action: **remove**
+Remove all spam control filters from your accounts
+
 ## Usage
 
 ```bash
@@ -28,6 +41,13 @@ ga-spam-control update
 ```bash
 ga-spam-control remove
 ```
+
+**Authentication**
+
+The first time you perform an action, you will be displayed an oAuth authorization dialog.
+If you permit the requested rights the authentication token will be stored in your home directory (`~/.ga-spam-control`).
+
+To sign out you can either delete the file or de-authorize the "Google Analytics Spam Control" app in your Google App Permissions at https://security.google.com/settings/security/permissions.
 
 ## Related Resources
 

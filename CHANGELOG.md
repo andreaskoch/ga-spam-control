@@ -7,5 +7,4 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Add basic command line interface for listing Google Analytics filters of all accounts
-
+- Add basic command line interface for displaying the spam control status, updating the spam control filters and removing the spam control features. The authentication is done via oAuth2.

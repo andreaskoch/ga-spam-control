@@ -86,7 +86,7 @@ func newCLI() (*cli, error) {
 		return nil, fmt.Errorf("Cannot determine the current users home direcotry. Error: %s", err)
 	}
 
-	tokenStoreFilePath := filepath.Join(homeDirPath, ".analytics")
+	tokenStoreFilePath := filepath.Join(homeDirPath, ".ga-spam-control")
 	tokenStore := newTokenStore(tokenStoreFilePath)
 
 	// create a new analytis API instance
