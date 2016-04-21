@@ -92,29 +92,29 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	}
 
 	// get the status for each account
-	subStatuses := make([]status.Status, 0, len(accounts))
+	accountStatuses := make([]status.Status, 0, len(accounts))
 	for _, account := range accounts {
 
-		status, filterStatusError := spamControl.filterProvider.GetFilterStatus(account.ID)
-		if filterStatusError != nil {
-			return StateOverview{}, filterStatusError
+		accountStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
+		if accountStatusError != nil {
+			return StateOverview{}, accountStatusError
 		}
 
 		accountStatusModel := AccountStatus{
 			AccountID:   account.ID,
 			AccountName: account.Name,
-			Status:      status,
+			Status:      accountStatus,
 		}
 
 		// capture the account status for the calculation of the
 		// overall status
-		subStatuses = append(subStatuses, status)
+		accountStatuses = append(accountStatuses, accountStatus)
 
 		overviewModel.Accounts = append(overviewModel.Accounts, accountStatusModel)
 	}
 
 	// set the overall status
-	overviewModel.OverallStatus = status.CalculateGlobalStatus(subStatuses)
+	overviewModel.OverallStatus = status.CalculateGlobalStatus(accountStatuses)
 
 	return *overviewModel, nil
 }

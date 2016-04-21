@@ -18,8 +18,8 @@ type filterProvider interface {
 	// RemoveFilter deletes the given filter from the specified account.
 	RemoveFilter(accountID, filterID string) error
 
-	// GetFilterStatus returns the status of the filter for the given account ID.
-	GetFilterStatus(accountID string) (status.Status, error)
+	// GetAccountStatus returns the status of the filter for the given account ID.
+	GetAccountStatus(accountID string) (status.Status, error)
 }
 
 type remoteFilterProvider struct {
@@ -61,8 +61,8 @@ func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID stri
 	return filterProvider.analyticsAPI.RemoveFilter(accountID, filterID)
 }
 
-// GetFilterStatus returns the status of the filter for the given account ID.
-func (filterProvider remoteFilterProvider) GetFilterStatus(accountID string) (status.Status, error) {
+// GetAccountStatus returns the status of for the given account ID.
+func (filterProvider remoteFilterProvider) GetAccountStatus(accountID string) (status.Status, error) {
 
 	// get the existing filters
 	existingFilters, existingFilterError := filterProvider.GetExistingFilters(accountID)
