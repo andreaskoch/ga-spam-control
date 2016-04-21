@@ -11,8 +11,8 @@ import (
 )
 
 // GoogleAnalyticsHostname contains the hostname of the Google Analytics API
-// const GoogleAnalyticsHostname = "www.googleapis.com"
-const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
+// const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
+const GoogleAnalyticsHostname = "www.googleapis.com"
 
 func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (*GoogleAnalytics, error) {
 
