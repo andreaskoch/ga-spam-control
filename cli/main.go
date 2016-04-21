@@ -91,8 +91,8 @@ func newCLI() (*cli, error) {
 	tokenStore := token.NewTokenStore(tokenStoreFilePath)
 
 	// create a new analytis API instance
-	googleAnalyticsClientID := "367149948041-v2up5mcsv4a415gm9rmmmli5lifucddr.apps.googleusercontent.com"
-	googleAnalyticsClientSecret := "P9GswEyyNGUuewVebN2k6EjH"
+	googleAnalyticsClientID := "821429244906-8aki1tiaov6g2o7lr7elp41435adk9ge.apps.googleusercontent.com"
+	googleAnalyticsClientSecret := "_WxLj0SpQ8HxqmOEyYDUTFzW"
 	analyticsAPI, apiError := api.New(tokenStore, googleAnalyticsClientID, googleAnalyticsClientSecret)
 	if apiError != nil {
 		return nil, apiError
