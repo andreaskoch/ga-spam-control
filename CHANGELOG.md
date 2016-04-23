@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 -
 
+## v0.2.0
+
 ### Changed
 
 - Add `accountID` argument to **update** and **remove** actions. So updating and removing will only be performed on specified accounts.
