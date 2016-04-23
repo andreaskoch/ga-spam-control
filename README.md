@@ -12,34 +12,65 @@ Google Analytics [referrer spam](https://en.wikipedia.org/wiki/Referer_spam) is 
 The command line utility provides the following actions:
 
 1. Action: **status**
-Display the spam-control status of all your account
+Display the spam-control status of all your accounts or for a specific account
 2. Action: **update**
-Create or update spam control filters for all your accounts
+Create or update spam-control filters for an accounts
 3. Action: **remove**
-Remove all spam control filters from your accounts
+Remove spam-control filters from an account
 
 ## Usage
 
 ```bash
-ga-spam-control <action> [..options]
+ga-spam-control <command> [<args> ...]
 ```
 
-Display the current **status** of your spam filters:
+### Print help information
+
+```bash
+ga-spam-control --help
+```
+
+### Display spam-control status
+
+Display the current spam-control **status** for all accounts that you have access to:
 
 ```bash
 ga-spam-control status
 ```
 
-**Update** your spam filters:
+Display the spam-control status in a parsable format:
 
 ```bash
-ga-spam-control update
+ga-spam-control status -q
+ga-spam-control status --quiet
 ```
 
-**Remove** all spam filters:
+Print account IDs of accounts that have the spam-control status of "not-installed"
 
 ```bash
-ga-spam-control remove
+ga-spam-control status -q | grep "not-installed" | awk '{print $1}'
+```
+
+Display the current spam-control **status** for a specific Google Analytics account:
+
+```bash
+ga-spam-control status <accountID>
+```
+
+### Install or update spam-control filters
+
+**update** the spam-control filters for a specific Google Analytics account:
+
+```bash
+ga-spam-control update <accountID>
+```
+
+### Uninstall spam-control filters
+
+**remove** the spam-control filters for a specific Google Analytics account:
+
+```bash
+ga-spam-control remove <accountID>
 ```
 
 **Authentication**

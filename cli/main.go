@@ -23,11 +23,17 @@ func main() {
 // and performs the selected action.
 func handleCommandlineArguments(args []string) {
 	app := kingpin.New("ga-spam-control", "Command-line utility for blocking referrer spam from your Google Analytics accounts")
-	app.Version("0.1.0")
+	app.Version("0.2.0")
 
 	status := app.Command("status", "Display the current spam control status of your accounts")
+	statusQuiet := status.Flag("quiet", "Display status in a parsable format").Short('q').Bool()
+	stutusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
+
 	update := app.Command("update", "Update your spam control settings")
+	updateAccountID := update.Arg("accountID", "Google Analytics account ID").Required().String()
+
 	remove := app.Command("remove", "Remove spam control from your accounts")
+	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
 
 	switch kingpin.MustParse(app.Parse(args)) {
 
@@ -38,7 +44,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", err.Error())
 		}
 
-		statusError := cli.Status()
+		statusError := cli.Status(*stutusAccountID, *statusQuiet)
 		if statusError != nil {
 			app.Fatalf("%s", statusError.Error())
 		}
@@ -52,7 +58,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", err.Error())
 		}
 
-		updateError := cli.Update()
+		updateError := cli.Update(*updateAccountID)
 		if updateError != nil {
 			app.Fatalf("%s", updateError.Error())
 		}
@@ -66,7 +72,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", err.Error())
 		}
 
-		removeError := cli.Remove()
+		removeError := cli.Remove(*removeAccountID)
 		if removeError != nil {
 			app.Fatalf("%s", removeError.Error())
 		}
@@ -113,24 +119,43 @@ type cli struct {
 	spamControl spamcontrol.SpamController
 }
 
-// Update the spam control filters.
-func (cli *cli) Update() error {
-	return cli.spamControl.Update()
+// Update the spam control filters for the account with the given accountID.
+func (cli *cli) Update(accountID string) error {
+	return cli.spamControl.Update(accountID)
 }
 
-// Remove all spam control filters.
-func (cli *cli) Remove() error {
-	return cli.spamControl.Remove()
+// Remove all spam control filters for the account with the given accountID.
+func (cli *cli) Remove(accountID string) error {
+	return cli.spamControl.Remove(accountID)
 }
 
 // Status displays the spam control status.
-func (cli *cli) Status() error {
-	statusViewModel, err := cli.spamControl.Status()
+func (cli *cli) Status(accountID string, quiet bool) error {
+
+	if accountID == "" {
+		return cli.gobalStatus(quiet)
+	}
+
+	return cli.accountStatus(accountID)
+}
+
+// gobalStatus displays the spam control status of all accessible accounts.
+func (cli *cli) gobalStatus(quiet bool) error {
+	statusViewModel, err := cli.spamControl.GlobalStatus()
 	if err != nil {
 		return err
 	}
 
-	statusTemplate, parseError := template.New("Status").Parse(templates.Status)
+	// select the display template
+	templateText := templates.PrettyStatus
+	if quiet {
+		// the "quiet" template contains no surplus texts
+		// and should be easier to parse by tools like awk
+		templateText = templates.QuietStatus
+	}
+
+	// parse the template
+	statusTemplate, parseError := template.New("Status").Parse(templateText)
 	if parseError != nil {
 		return parseError
 	}
@@ -139,6 +164,19 @@ func (cli *cli) Status() error {
 	if renderError != nil {
 		return renderError
 	}
+
+	return nil
+}
+
+// accountStatus displays the spam control status for account with
+// the given accountID.
+func (cli *cli) accountStatus(accountID string) error {
+	accountStatus, err := cli.spamControl.AccountStatus(accountID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stdout, "%s\n", accountStatus)
 
 	return nil
 }
