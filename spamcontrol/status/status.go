@@ -11,10 +11,10 @@ const (
 )
 
 var labels = []string{
-	"not set",
+	"not-set",
 	"up-to-date",
 	"outdated",
-	"not installed",
+	"not-installed",
 	"obsolete",
 }
 

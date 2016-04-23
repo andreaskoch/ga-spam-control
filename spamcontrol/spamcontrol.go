@@ -7,10 +7,27 @@ import (
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
+// The SpamController interface provides functions for displaying, updating and removing referrer spam controls.
 type SpamController interface {
-	Remove() error
-	Status() (StateOverview, error)
-	Update() error
+
+	// Remove the referrer spam controls from the account with the given accountID.
+	// Returns an error if the removal failed.
+	Remove(accountID string) error
+
+	// Status collects the current spam-control status of all accessible
+	// analytics accounts. It returns the a StateOverview model with the Status
+	// of all accounts and an overall Status. If the status cannot be determined
+	// an error will be returned.
+	GlobalStatus() (StateOverview, error)
+
+	// AccountStatus returns the current spam-control status of the account
+	// with the given account ID. Returns an error if the status cannot be
+	// determined.
+	AccountStatus(accountID string) (status.Status, error)
+
+	// Update the referrer spam controls for the account with the given accountID.
+	// Returns an error if the update failed.
+	Update(accountID string) error
 }
 
 // New creates a new spam control instance.
@@ -49,37 +66,36 @@ type SpamControl struct {
 	filterProvider  filterProvider
 }
 
-func (spamControl *SpamControl) Remove() error {
-	// get all available accounts
-	accounts, accountsError := spamControl.accountProvider.GetAccounts()
-	if accountsError != nil {
-		return accountsError
+// Remove the referrer spam controls from the account with the given accountID.
+// Returns an error if the removal failed.
+func (spamControl *SpamControl) Remove(accountID string) error {
+
+	// get the requested account
+	account, accountError := spamControl.accountProvider.GetAccount(accountID)
+	if accountError != nil {
+		return accountError
 	}
 
-	for _, account := range accounts {
+	// get all filters for account
+	filters, filtersError := spamControl.filterProvider.GetExistingFilters(account.ID)
+	if filtersError != nil {
+		return filtersError
+	}
 
-		// get all filters for account
-		filters, filtersError := spamControl.filterProvider.GetExistingFilters(account.ID)
-		if filtersError != nil {
-			return filtersError
+	for _, filter := range filters {
+		if err := spamControl.filterProvider.RemoveFilter(account.ID, filter.ID); err != nil {
+			return err
 		}
-
-		for _, filter := range filters {
-			if err := spamControl.filterProvider.RemoveFilter(account.ID, filter.ID); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	return nil
 }
 
-// Status collects the current spam-control status of all accessible
+// GlobalStatus collects the current spam-control status of all accessible
 // analytics accounts. It returns the a StateOverview model with the Status
 // of all accounts and an overall Status. If the status cannot be determined
 // an error will be returned.
-func (spamControl *SpamControl) Status() (StateOverview, error) {
+func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 	// get all available accounts
 	accounts, accountsError := spamControl.accountProvider.GetAccounts()
 	if accountsError != nil {
@@ -119,63 +135,78 @@ func (spamControl *SpamControl) Status() (StateOverview, error) {
 	return *overviewModel, nil
 }
 
-// Update creates or updates spam-control filters for all accounts.
-func (spamControl *SpamControl) Update() error {
-
-	// get all available accounts
-	accounts, accountsError := spamControl.accountProvider.GetAccounts()
-	if accountsError != nil {
-		return accountsError
+// AccountStatus returns the current spam-control status of the account
+// with the given account ID. Returns an error if the status cannot be
+// determined.
+func (spamControl *SpamControl) AccountStatus(accountID string) (status.Status, error) {
+	// get the requested account
+	account, accountError := spamControl.accountProvider.GetAccount(accountID)
+	if accountError != nil {
+		return status.NotSet, accountError
 	}
 
-	// create the filters for all accounts
-	for _, account := range accounts {
+	// get the accounts' status
+	accountStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
+	if accountStatusError != nil {
+		return status.NotSet, accountStatusError
+	}
 
-		filterStatuses, filterStatusError := spamControl.filterProvider.GetFilterStatuses(account.ID)
-		if filterStatusError != nil {
-			return filterStatusError
+	return accountStatus, nil
+}
+
+// Update the referrer spam controls for the account with the given accountID.
+// Returns an error if the update failed.
+func (spamControl *SpamControl) Update(accountID string) error {
+
+	// get the requested account
+	account, accountError := spamControl.accountProvider.GetAccount(accountID)
+	if accountError != nil {
+		return accountError
+	}
+
+	filterStatuses, filterStatusError := spamControl.filterProvider.GetFilterStatuses(account.ID)
+	if filterStatusError != nil {
+		return filterStatusError
+	}
+
+	for _, filterStatus := range filterStatuses {
+
+		// ignore up-to-date filters
+		if filterStatus.Status() == status.UpToDate {
+			continue
 		}
 
-		for _, filterStatus := range filterStatuses {
-
-			// ignore up-to-date filters
-			if filterStatus.Status() == status.UpToDate {
-				continue
+		// remove obsolete filters
+		if filterStatus.Status() == status.Obsolete {
+			removeError := spamControl.filterProvider.RemoveFilter(account.ID, filterStatus.Filter().ID)
+			if removeError != nil {
+				return removeError
 			}
 
-			// remove obsolete filters
-			if filterStatus.Status() == status.Obsolete {
-				removeError := spamControl.filterProvider.RemoveFilter(account.ID, filterStatus.Filter().ID)
-				if removeError != nil {
-					return removeError
-				}
-
-				continue
-			}
-
-			// update outdated filters
-			if filterStatus.Status() == status.Outdated {
-				_, updateError := spamControl.filterProvider.UpdateFilter(account.ID, filterStatus.Filter().ID, filterStatus.Filter())
-				if updateError != nil {
-					return updateError
-				}
-
-				continue
-			}
-
-			// create new filters
-			if filterStatus.Status() == status.NotInstalled {
-				_, createError := spamControl.filterProvider.CreateFilter(account.ID, filterStatus.Filter())
-				if createError != nil {
-					return createError
-				}
-
-				continue
-			}
-
-			return fmt.Errorf("Cannot update filter %q. Status %q cannot be handled.", filterStatus.Filter().Name, filterStatus.Status())
+			continue
 		}
 
+		// update outdated filters
+		if filterStatus.Status() == status.Outdated {
+			_, updateError := spamControl.filterProvider.UpdateFilter(account.ID, filterStatus.Filter().ID, filterStatus.Filter())
+			if updateError != nil {
+				return updateError
+			}
+
+			continue
+		}
+
+		// create new filters
+		if filterStatus.Status() == status.NotInstalled {
+			_, createError := spamControl.filterProvider.CreateFilter(account.ID, filterStatus.Filter())
+			if createError != nil {
+				return createError
+			}
+
+			continue
+		}
+
+		return fmt.Errorf("Cannot update filter %q. Status %q cannot be handled.", filterStatus.Filter().Name, filterStatus.Status())
 	}
 
 	return nil
