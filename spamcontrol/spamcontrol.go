@@ -54,20 +54,26 @@ func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 		filterFactory:      filterFactory,
 	}
 
+	analyticsDataProvider := &remoteAnalyticsDataProvider{
+		analyticsAPI: analyticsAPI,
+	}
+
 	return &SpamControl{
-		accountProvider: accountProvider,
-		filterFactory:   filterFactory,
-		filterProvider:  filterProvider,
+		accountProvider:       accountProvider,
+		filterFactory:         filterFactory,
+		filterProvider:        filterProvider,
+		analyticsDataProvider: analyticsDataProvider,
 	}
 }
 
 // The SpamControl type provides functions for
 // managing Google Analtics spam filters.
 type SpamControl struct {
-	accountProvider accountProvider
-	domainProvider  spamDomainProvider
-	filterFactory   filterFactory
-	filterProvider  filterProvider
+	accountProvider       accountProvider
+	domainProvider        spamDomainProvider
+	filterFactory         filterFactory
+	filterProvider        filterProvider
+	analyticsDataProvider analyticsDataProvider
 }
 
 // Remove the referrer spam controls from the account with the given accountID.
@@ -98,6 +104,14 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 // Analyze checks the given account for referrer spam.
 // Returns an error if the analysis failed.
 func (spamControl *SpamControl) Analyze(accountID string) error {
+
+	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID)
+	if analyticsDataError != nil {
+		return analyticsDataError
+	}
+
+	fmt.Println(len(analyticsData.Rows))
+
 	return nil
 }
 

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 	"github.com/andreaskoch/ga-spam-control/api/apiservice"
 )
@@ -10,6 +12,9 @@ type AnalyticsAPI interface {
 
 	// GetAccounts returns all apiservice.Account models.
 	GetAccounts() ([]Account, error)
+
+	// GetAnalyticsData analytics data for the given account ID.
+	GetAnalyticsData(accountID string) (AnalyticsData, error)
 
 	// CreateFilter creates a new Filter for the given account ID.
 	CreateFilter(accountID string, filter Filter) (Filter, error)
@@ -56,6 +61,28 @@ func (api *API) GetAccounts() ([]Account, error) {
 	SortAccountsBy(accountsByID).Sort(accounts)
 
 	return accounts, nil
+}
+
+// GetAnalyticsData analytics data for the given account ID.
+func (api *API) GetAnalyticsData(accountID string) (AnalyticsData, error) {
+
+	// get the profiles to which the filter will be assigned
+	profiles, profilesError := api.GetProfiles(accountID)
+	if profilesError != nil {
+		return AnalyticsData{}, profilesError
+	}
+
+	if len(profiles) == 0 {
+		return AnalyticsData{}, fmt.Errorf("No profiles found for account %q", accountID)
+	}
+
+	profile := profiles[0]
+	serviceData, analyticsDataErr := api.service.GetAnalyticsData(profile.ID)
+	if analyticsDataErr != nil {
+		return AnalyticsData{}, analyticsDataErr
+	}
+
+	return toModelAnalyticsData(serviceData), nil
 }
 
 // CreateFilter creates a new Filter for the given account ID.
