@@ -35,6 +35,9 @@ func handleCommandlineArguments(args []string) {
 	remove := app.Command("remove", "Remove spam control from your accounts")
 	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
 
+	analyze := app.Command("analyze", "Check the given account for referrer spam")
+	analyzeAccountID := analyze.Arg("accountID", "Google Analytics account ID").Required().String()
+
 	switch kingpin.MustParse(app.Parse(args)) {
 
 	// Display status
@@ -75,6 +78,20 @@ func handleCommandlineArguments(args []string) {
 		removeError := cli.Remove(*removeAccountID)
 		if removeError != nil {
 			app.Fatalf("%s", removeError.Error())
+		}
+
+		os.Exit(0)
+
+		// Analyze account
+	case analyze.FullCommand():
+		cli, err := newCLI()
+		if err != nil {
+			app.Fatalf("%s", err.Error())
+		}
+
+		analyzeError := cli.Analyze(*analyzeAccountID)
+		if analyzeError != nil {
+			app.Fatalf("%s", analyzeError.Error())
 		}
 
 		os.Exit(0)
@@ -127,6 +144,11 @@ func (cli *cli) Update(accountID string) error {
 // Remove all spam control filters for the account with the given accountID.
 func (cli *cli) Remove(accountID string) error {
 	return cli.spamControl.Remove(accountID)
+}
+
+// Analyze checks the given account for referrer-spam.
+func (cli *cli) Analyze(accountID string) error {
+	return cli.spamControl.Analyze(accountID)
 }
 
 // Status displays the spam control status.

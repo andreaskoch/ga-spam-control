@@ -14,6 +14,10 @@ type SpamController interface {
 	// Returns an error if the removal failed.
 	Remove(accountID string) error
 
+	// Analyze checks the given account for referrer spam.
+	// Returns an error if the analysis failed.
+	Analyze(accountID string) error
+
 	// Status collects the current spam-control status of all accessible
 	// analytics accounts. It returns the a StateOverview model with the Status
 	// of all accounts and an overall Status. If the status cannot be determined
@@ -88,6 +92,12 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 		}
 	}
 
+	return nil
+}
+
+// Analyze checks the given account for referrer spam.
+// Returns an error if the analysis failed.
+func (spamControl *SpamControl) Analyze(accountID string) error {
 	return nil
 }
 
