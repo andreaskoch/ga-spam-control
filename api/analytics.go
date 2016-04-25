@@ -1,14 +1,13 @@
 package api
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/andreaskoch/ga-spam-control/api/apiservice"
 )
 
-type AnalyticsData struct {
-	Rows []AnalyticsDataRow
-}
+type AnalyticsData []AnalyticsDataRow
 
 type AnalyticsDataRow struct {
 	// Dimensions
@@ -28,7 +27,7 @@ type AnalyticsDataRow struct {
 }
 
 // toModelAnalyticsData converts a apiservice.AnalyticsData model into a AnalyticsData model.
-func toModelAnalyticsData(source apiservice.AnalyticsData) AnalyticsData {
+func toModelAnalyticsData(source apiservice.AnalyticsData) (AnalyticsData, error) {
 	analyticsData := AnalyticsData{}
 
 	for _, row := range source.Rows {
@@ -37,9 +36,6 @@ func toModelAnalyticsData(source apiservice.AnalyticsData) AnalyticsData {
 		for colIndex, col := range source.Cols {
 
 			value := row.Cell[colIndex].Value
-			if value == "" {
-				value = "(not set)"
-			}
 
 			switch col.Label {
 
@@ -52,11 +48,14 @@ func toModelAnalyticsData(source apiservice.AnalyticsData) AnalyticsData {
 			case "ga:source":
 				analyticsDataRow.Source = value
 
-			case "ga:medim":
+			case "ga:medium":
 				analyticsDataRow.Medium = value
 
 			case "ga:networkDomain":
 				analyticsDataRow.NetworkDomain = value
+
+			case "ga:networkLocation":
+				analyticsDataRow.NetworkLocation = value
 
 			case "ga:landingPagePath":
 				analyticsDataRow.LandingPagePath = value
@@ -77,13 +76,16 @@ func toModelAnalyticsData(source apiservice.AnalyticsData) AnalyticsData {
 				floatValue, _ := strconv.ParseFloat(value, 64)
 				analyticsDataRow.TimeOnPage = floatValue
 
-			}
+			default:
+				return AnalyticsData{}, fmt.Errorf("The column %q was not recognized", col.Label)
 
-			analyticsData.Rows = append(analyticsData.Rows, analyticsDataRow)
+			}
 
 		}
 
+		analyticsData = append(analyticsData, analyticsDataRow)
+
 	}
 
-	return analyticsData
+	return analyticsData, nil
 }

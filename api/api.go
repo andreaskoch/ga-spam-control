@@ -77,12 +77,13 @@ func (api *API) GetAnalyticsData(accountID string) (AnalyticsData, error) {
 	}
 
 	profile := profiles[0]
-	serviceData, analyticsDataErr := api.service.GetAnalyticsData(profile.ID)
+	numberOfDays := 30
+	serviceData, analyticsDataErr := api.service.GetAnalyticsData(profile.ID, numberOfDays)
 	if analyticsDataErr != nil {
 		return AnalyticsData{}, analyticsDataErr
 	}
 
-	return toModelAnalyticsData(serviceData), nil
+	return toModelAnalyticsData(serviceData)
 }
 
 // CreateFilter creates a new Filter for the given account ID.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/andreaskoch/ga-spam-control/api"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
@@ -58,11 +59,14 @@ func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 		analyticsAPI: analyticsAPI,
 	}
 
+	spamDetector := &detector.AzureMLSpamDetection{}
+
 	return &SpamControl{
 		accountProvider:       accountProvider,
 		filterFactory:         filterFactory,
 		filterProvider:        filterProvider,
 		analyticsDataProvider: analyticsDataProvider,
+		spamDetector:          spamDetector,
 	}
 }
 
@@ -74,6 +78,7 @@ type SpamControl struct {
 	filterFactory         filterFactory
 	filterProvider        filterProvider
 	analyticsDataProvider analyticsDataProvider
+	spamDetector          detector.SpamDetector
 }
 
 // Remove the referrer spam controls from the account with the given accountID.
@@ -110,7 +115,25 @@ func (spamControl *SpamControl) Analyze(accountID string) error {
 		return analyticsDataError
 	}
 
-	fmt.Println(len(analyticsData.Rows))
+	ratedAnalyticsData, spamDetectionError := spamControl.spamDetector.GetSpamRating(analyticsData)
+	if spamDetectionError != nil {
+		return spamDetectionError
+	}
+
+	// get all spam domains
+	spamDomains := make(map[string]int)
+	for _, row := range ratedAnalyticsData {
+		if !row.IsSpam {
+			continue
+		}
+
+		spamDomains[row.Source]++
+	}
+
+	// print a spam domain names
+	for spamDomain, _ := range spamDomains {
+		fmt.Println(spamDomain)
+	}
 
 	return nil
 }
