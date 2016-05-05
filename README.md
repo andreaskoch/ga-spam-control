@@ -38,7 +38,7 @@ Display the current spam-control **status** for all accounts that you have acces
 ga-spam-control status
 ```
 
-Display the spam-control status in a parsable format:
+Display the spam-control status in a parseable format:
 
 ```bash
 ga-spam-control status -q
