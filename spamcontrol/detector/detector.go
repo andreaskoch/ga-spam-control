@@ -36,8 +36,8 @@ func (spamDetection AzureMLSpamDetection) GetSpamRating(analyticsData api.Analyt
 		return nil, fmt.Errorf("The input request model could not be serialized: %s", serializeError.Error())
 	}
 
-	//uri := "https://europewest.services.azureml.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/9def2d38e1d6422c8115fcb04bec56c7/execute?api-version=2.0&details=true"
-	uri := "https://europewest-services-azureml-net-yb0hxtzk6st4.runscope.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/9def2d38e1d6422c8115fcb04bec56c7/execute?api-version=2.0&details=true"
+	uri := "https://europewest.services.azureml.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/9def2d38e1d6422c8115fcb04bec56c7/execute?api-version=2.0&details=true"
+	// uri := "https://europewest-services-azureml-net-yb0hxtzk6st4.runscope.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/9def2d38e1d6422c8115fcb04bec56c7/execute?api-version=2.0&details=true"
 	request, createRequestError := http.NewRequest(http.MethodPost, uri, buffer)
 	if createRequestError != nil {
 		return nil, fmt.Errorf("The PUT request could not be created: %s", createRequestError.Error())
