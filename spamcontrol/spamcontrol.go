@@ -121,32 +121,56 @@ func (spamControl *SpamControl) Analyze(accountID string) (AnalysisResult, error
 	}
 
 	// get all spam domains
-	spamDomains := make(map[string]int)
+	spamDomainMap := make(map[string][]SpamDomain)
 	for _, row := range ratedAnalyticsData {
 		if !row.IsSpam {
 			continue
 		}
 
-		spamDomains[row.Source]++
+		spamDomainMap[row.Source] = append(spamDomainMap[row.Source], SpamDomain{
+			DomainName:      row.Source,
+			SpamProbability: row.Probability,
+		})
 	}
 
-	// assemble a view model
-	spamStatusModel := AnalysisResult{
-		AccountID:   accountID,
-		SpamDomains: make([]SpamDomain, 0),
-	}
+	var spamDomains []SpamDomain
+	for domainName, domains := range spamDomainMap {
 
-	for spamDomain, count := range spamDomains {
-		spamStatusModel.SpamDomains = append(spamStatusModel.SpamDomains, SpamDomain{
-			DomainName:      spamDomain,
-			NumberOfEntries: count,
+		propability := getAverageProbability(domains)
+		if propability < 0.75 {
+			continue
+		}
+
+		spamDomains = append(spamDomains, SpamDomain{
+			DomainName:      domainName,
+			SpamProbability: propability,
 		})
 	}
 
 	// sort the domains by name
-	SortSpamDomainsBy(spamDomainsByName).Sort(spamStatusModel.SpamDomains)
+	SortSpamDomainsBy(spamDomainsByName).Sort(spamDomains)
+
+	// assemble a view model
+	spamStatusModel := AnalysisResult{
+		AccountID:   accountID,
+		SpamDomains: spamDomains,
+	}
 
 	return spamStatusModel, nil
+}
+
+func getAverageProbability(spamDomains []SpamDomain) float64 {
+	if len(spamDomains) == 0 {
+		return 0.0
+	}
+
+	totalProbability := 0.0
+	for _, spamDomain := range spamDomains {
+		totalProbability += spamDomain.SpamProbability
+	}
+
+	numberOfDomains := float64(len(spamDomains))
+	return totalProbability / numberOfDomains
 }
 
 // GlobalStatus collects the current spam-control status of all accessible

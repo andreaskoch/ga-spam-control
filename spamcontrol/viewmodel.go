@@ -32,8 +32,8 @@ type SpamDomain struct {
 	// DomainName defines contains the domain name of the spam domain (e.g. "rank-checker.online")
 	DomainName string `json:"domainName"`
 
-	// NumberOfEntries contains of number of spam entries for current spam domain.
-	NumberOfEntries int `json:"numberOfEntries"`
+	// SpamProbability contains the spam probability for this domain.
+	SpamProbability float64 `json:"spamProbability"`
 }
 
 // spamDomainsByName can be used to sort spamDomains by name (ascending).
