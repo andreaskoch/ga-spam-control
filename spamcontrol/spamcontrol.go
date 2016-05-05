@@ -17,7 +17,7 @@ type SpamController interface {
 
 	// Analyze checks the given account for referrer spam and returns the result
 	// of the analysis as a view model. Returns an error if the analysis failed.
-	Analyze(accountID string) (AnalysisResult, error)
+	DetectSpam(accountID string) (AnalysisResult, error)
 
 	// Status collects the current spam-control status of all accessible
 	// analytics accounts. It returns the a StateOverview model with the Status
@@ -106,9 +106,9 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 	return nil
 }
 
-// Analyze checks the given account for referrer spam.
+// DetectSpam checks the given account for referrer spam.
 // Returns an error if the analysis failed.
-func (spamControl *SpamControl) Analyze(accountID string) (AnalysisResult, error) {
+func (spamControl *SpamControl) DetectSpam(accountID string) (AnalysisResult, error) {
 
 	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID)
 	if analyticsDataError != nil {

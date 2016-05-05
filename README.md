@@ -17,6 +17,8 @@ Display the spam-control status of all your accounts or for a specific account
 Create or update spam-control filters for an accounts
 3. Action: **remove**
 Remove spam-control filters from an account
+4. Action: **detect-spam**
+Check a given account for referrer spam
 
 ## Usage
 
@@ -71,6 +73,14 @@ ga-spam-control update <accountID>
 
 ```bash
 ga-spam-control remove <accountID>
+```
+
+### Detect spam
+
+**detect-spam** check the given Google Analytics account for referrer spam:
+
+```bash
+ga-spam-control detect-spam <accountID>
 ```
 
 **Authentication**

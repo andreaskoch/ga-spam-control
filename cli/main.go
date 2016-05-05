@@ -35,9 +35,9 @@ func handleCommandlineArguments(args []string) {
 	remove := app.Command("remove", "Remove spam control from your accounts")
 	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
 
-	analyze := app.Command("analyze", "Check the given account for referrer spam")
-	analyzeQuiet := analyze.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
-	analyzeAccountID := analyze.Arg("accountID", "Google Analytics account ID").Required().String()
+	detectSpam := app.Command("detect-spam", "Check the given account for referrer spam")
+	detectSpamQuiet := detectSpam.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
+	detectSpamAccountID := detectSpam.Arg("accountID", "Google Analytics account ID").Required().String()
 
 	switch kingpin.MustParse(app.Parse(args)) {
 
@@ -83,16 +83,16 @@ func handleCommandlineArguments(args []string) {
 
 		os.Exit(0)
 
-	// Analyze account
-	case analyze.FullCommand():
+		// DetectSpam account
+	case detectSpam.FullCommand():
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
 
-		analyzeError := cli.Analyze(*analyzeAccountID, *analyzeQuiet)
-		if analyzeError != nil {
-			app.Fatalf("%s", analyzeError.Error())
+		detectSpamError := cli.DetectSpam(*detectSpamAccountID, *detectSpamQuiet)
+		if detectSpamError != nil {
+			app.Fatalf("%s", detectSpamError.Error())
 		}
 
 		os.Exit(0)
@@ -147,9 +147,9 @@ func (cli *cli) Remove(accountID string) error {
 	return cli.spamControl.Remove(accountID)
 }
 
-// Analyze checks the given account for referrer-spam.
-func (cli *cli) Analyze(accountID string, quiet bool) error {
-	analysisResultViewModel, err := cli.spamControl.Analyze(accountID)
+// DetectSpam checks the given account for referrer-spam.
+func (cli *cli) DetectSpam(accountID string, quiet bool) error {
+	analysisResultViewModel, err := cli.spamControl.DetectSpam(accountID)
 	if err != nil {
 		return err
 	}
