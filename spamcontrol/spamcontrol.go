@@ -143,6 +143,9 @@ func (spamControl *SpamControl) Analyze(accountID string) (AnalysisResult, error
 		})
 	}
 
+	// sort the domains by name
+	SortSpamDomainsBy(spamDomainsByName).Sort(spamStatusModel.SpamDomains)
+
 	return spamStatusModel, nil
 }
 

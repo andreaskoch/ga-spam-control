@@ -1,6 +1,10 @@
 package spamcontrol
 
-import "github.com/andreaskoch/ga-spam-control/spamcontrol/status"
+import (
+	"sort"
+
+	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
+)
 
 // A StateOverview represents the spam-control status of all accounts.
 type StateOverview struct {
@@ -30,4 +34,39 @@ type SpamDomain struct {
 
 	// NumberOfEntries contains of number of spam entries for current spam domain.
 	NumberOfEntries int `json:"numberOfEntries"`
+}
+
+// spamDomainsByName can be used to sort spamDomains by name (ascending).
+func spamDomainsByName(spamDomain1, spamDomain2 SpamDomain) bool {
+	return spamDomain1.DomainName < spamDomain2.DomainName
+}
+
+// The SortSpamDomainsBy function sorts SpamDomain objects.
+type SortSpamDomainsBy func(spamDomain1, spamDomain2 SpamDomain) bool
+
+// Sort the given SpamDomain objects.
+func (by SortSpamDomainsBy) Sort(spamDomains []SpamDomain) {
+	sorter := &spamDomainSorter{
+		spamDomains: spamDomains,
+		by:          by,
+	}
+
+	sort.Sort(sorter)
+}
+
+type spamDomainSorter struct {
+	spamDomains []SpamDomain
+	by          SortSpamDomainsBy
+}
+
+func (sorter *spamDomainSorter) Len() int {
+	return len(sorter.spamDomains)
+}
+
+func (sorter *spamDomainSorter) Swap(i, j int) {
+	sorter.spamDomains[i], sorter.spamDomains[j] = sorter.spamDomains[j], sorter.spamDomains[i]
+}
+
+func (sorter *spamDomainSorter) Less(i, j int) bool {
+	return sorter.by(sorter.spamDomains[i], sorter.spamDomains[j])
 }
