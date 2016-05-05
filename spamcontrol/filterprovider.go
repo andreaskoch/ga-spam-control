@@ -38,7 +38,7 @@ type remoteFilterProvider struct {
 // GetExistingFilters returns a list of all existing api.Filter models
 // for the given account ID.
 func (filterProvider remoteFilterProvider) GetExistingFilters(accountID string) ([]api.Filter, error) {
-	filters := make([]api.Filter, 0)
+	var filters []api.Filter
 
 	allFilters, filtersError := filterProvider.analyticsAPI.GetFilters(accountID)
 	if filtersError != nil {
@@ -158,10 +158,12 @@ func getFilterNameMap(filters []api.Filter) map[string]api.Filter {
 	return nameMap
 }
 
+// FilterStatuses are a list of of FilterStatus objects.
 type FilterStatuses []FilterStatus
 
+// OverallStatus calculates an overall status for all status in this list.
 func (filterStatuses FilterStatuses) OverallStatus() status.Status {
-	statuses := make([]status.Status, 0)
+	var statuses []status.Status
 	for _, filterStatus := range filterStatuses {
 		statuses = append(statuses, filterStatus.Status())
 	}
@@ -174,6 +176,7 @@ func newFilterStatus(filter api.Filter, status status.Status) FilterStatus {
 	return FilterStatus{filter, status}
 }
 
+// FilterStatus represents the status for a given api.Filter.
 type FilterStatus struct {
 	filter api.Filter
 	status status.Status
@@ -183,10 +186,12 @@ func (filterStatus FilterStatus) String() string {
 	return fmt.Sprintf("%s (%s)", filterStatus.filter.ID, filterStatus.status)
 }
 
+// Filter returns the api.Filter.
 func (filterStatus FilterStatus) Filter() api.Filter {
 	return filterStatus.filter
 }
 
+// Status returns the status.Status.
 func (filterStatus FilterStatus) Status() status.Status {
 	return filterStatus.status
 }
@@ -196,8 +201,10 @@ func filterStatusesByName(filterStatus1, filterStatus2 FilterStatus) bool {
 	return filterStatus1.Filter().Name < filterStatus2.Filter().Name
 }
 
+// The SortFiltersBy function sorts two FilterStatus objects.
 type SortFiltersBy func(filter1, filter2 FilterStatus) bool
 
+// Sort a list of FilterStatus objects.
 func (by SortFiltersBy) Sort(filterStatuses []FilterStatus) {
 	sorter := &filterStatusSorter{
 		filterStatuses: filterStatuses,

@@ -15,9 +15,9 @@ type SpamController interface {
 	// Returns an error if the removal failed.
 	Remove(accountID string) error
 
-	// Analyze checks the given account for referrer spam.
-	// Returns an error if the analysis failed.
-	Analyze(accountID string) error
+	// Analyze checks the given account for referrer spam and returns the result
+	// of the analysis as a view model. Returns an error if the analysis failed.
+	Analyze(accountID string) (AnalysisResult, error)
 
 	// Status collects the current spam-control status of all accessible
 	// analytics accounts. It returns the a StateOverview model with the Status
@@ -108,16 +108,16 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 
 // Analyze checks the given account for referrer spam.
 // Returns an error if the analysis failed.
-func (spamControl *SpamControl) Analyze(accountID string) error {
+func (spamControl *SpamControl) Analyze(accountID string) (AnalysisResult, error) {
 
 	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID)
 	if analyticsDataError != nil {
-		return analyticsDataError
+		return AnalysisResult{}, analyticsDataError
 	}
 
 	ratedAnalyticsData, spamDetectionError := spamControl.spamDetector.GetSpamRating(analyticsData)
 	if spamDetectionError != nil {
-		return spamDetectionError
+		return AnalysisResult{}, spamDetectionError
 	}
 
 	// get all spam domains
@@ -130,12 +130,20 @@ func (spamControl *SpamControl) Analyze(accountID string) error {
 		spamDomains[row.Source]++
 	}
 
-	// print a spam domain names
-	for spamDomain, _ := range spamDomains {
-		fmt.Println(spamDomain)
+	// assemble a view model
+	spamStatusModel := AnalysisResult{
+		AccountID:   accountID,
+		SpamDomains: make([]SpamDomain, 0),
 	}
 
-	return nil
+	for spamDomain, count := range spamDomains {
+		spamStatusModel.SpamDomains = append(spamStatusModel.SpamDomains, SpamDomain{
+			DomainName:      spamDomain,
+			NumberOfEntries: count,
+		})
+	}
+
+	return spamStatusModel, nil
 }
 
 // GlobalStatus collects the current spam-control status of all accessible

@@ -27,7 +27,7 @@ func handleCommandlineArguments(args []string) {
 
 	status := app.Command("status", "Display the current spam control status of your accounts")
 	statusQuiet := status.Flag("quiet", "Display status in a parsable format").Short('q').Bool()
-	stutusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
+	statusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
 
 	update := app.Command("update", "Update your spam control settings")
 	updateAccountID := update.Arg("accountID", "Google Analytics account ID").Required().String()
@@ -36,6 +36,7 @@ func handleCommandlineArguments(args []string) {
 	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
 
 	analyze := app.Command("analyze", "Check the given account for referrer spam")
+	analyzeQuiet := analyze.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
 	analyzeAccountID := analyze.Arg("accountID", "Google Analytics account ID").Required().String()
 
 	switch kingpin.MustParse(app.Parse(args)) {
@@ -47,7 +48,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", err.Error())
 		}
 
-		statusError := cli.Status(*stutusAccountID, *statusQuiet)
+		statusError := cli.Status(*statusAccountID, *statusQuiet)
 		if statusError != nil {
 			app.Fatalf("%s", statusError.Error())
 		}
@@ -82,14 +83,14 @@ func handleCommandlineArguments(args []string) {
 
 		os.Exit(0)
 
-		// Analyze account
+	// Analyze account
 	case analyze.FullCommand():
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
 
-		analyzeError := cli.Analyze(*analyzeAccountID)
+		analyzeError := cli.Analyze(*analyzeAccountID, *analyzeQuiet)
 		if analyzeError != nil {
 			app.Fatalf("%s", analyzeError.Error())
 		}
@@ -147,8 +148,32 @@ func (cli *cli) Remove(accountID string) error {
 }
 
 // Analyze checks the given account for referrer-spam.
-func (cli *cli) Analyze(accountID string) error {
-	return cli.spamControl.Analyze(accountID)
+func (cli *cli) Analyze(accountID string, quiet bool) error {
+	analysisResultViewModel, err := cli.spamControl.Analyze(accountID)
+	if err != nil {
+		return err
+	}
+
+	// select the display template
+	templateText := templates.PrettyAnalysis
+	if quiet {
+		// the "quiet" template contains no surplus texts
+		// and should be easier to parse by tools like awk
+		templateText = templates.QuietAnalysis
+	}
+
+	// parse the template
+	analysisTemplate, parseError := template.New("Analysis").Parse(templateText)
+	if parseError != nil {
+		return parseError
+	}
+
+	renderError := analysisTemplate.Execute(os.Stdout, analysisResultViewModel)
+	if renderError != nil {
+		return renderError
+	}
+
+	return nil
 }
 
 // Status displays the spam control status.
