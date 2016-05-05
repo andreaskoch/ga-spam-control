@@ -27,13 +27,17 @@ func handleCommandlineArguments(args []string) {
 
 	status := app.Command("status", "Display the current spam control status of your accounts")
 	statusQuiet := status.Flag("quiet", "Display status in a parsable format").Short('q').Bool()
-	stutusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
+	statusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
 
 	update := app.Command("update", "Update your spam control settings")
 	updateAccountID := update.Arg("accountID", "Google Analytics account ID").Required().String()
 
 	remove := app.Command("remove", "Remove spam control from your accounts")
 	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
+
+	detectSpam := app.Command("detect-spam", "Check the given account for referrer spam")
+	detectSpamQuiet := detectSpam.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
+	detectSpamAccountID := detectSpam.Arg("accountID", "Google Analytics account ID").Required().String()
 
 	switch kingpin.MustParse(app.Parse(args)) {
 
@@ -44,7 +48,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", err.Error())
 		}
 
-		statusError := cli.Status(*stutusAccountID, *statusQuiet)
+		statusError := cli.Status(*statusAccountID, *statusQuiet)
 		if statusError != nil {
 			app.Fatalf("%s", statusError.Error())
 		}
@@ -75,6 +79,20 @@ func handleCommandlineArguments(args []string) {
 		removeError := cli.Remove(*removeAccountID)
 		if removeError != nil {
 			app.Fatalf("%s", removeError.Error())
+		}
+
+		os.Exit(0)
+
+		// DetectSpam account
+	case detectSpam.FullCommand():
+		cli, err := newCLI()
+		if err != nil {
+			app.Fatalf("%s", err.Error())
+		}
+
+		detectSpamError := cli.DetectSpam(*detectSpamAccountID, *detectSpamQuiet)
+		if detectSpamError != nil {
+			app.Fatalf("%s", detectSpamError.Error())
 		}
 
 		os.Exit(0)
@@ -127,6 +145,35 @@ func (cli *cli) Update(accountID string) error {
 // Remove all spam control filters for the account with the given accountID.
 func (cli *cli) Remove(accountID string) error {
 	return cli.spamControl.Remove(accountID)
+}
+
+// DetectSpam checks the given account for referrer-spam.
+func (cli *cli) DetectSpam(accountID string, quiet bool) error {
+	analysisResultViewModel, err := cli.spamControl.DetectSpam(accountID)
+	if err != nil {
+		return err
+	}
+
+	// select the display template
+	templateText := templates.PrettyAnalysis
+	if quiet {
+		// the "quiet" template contains no surplus texts
+		// and should be easier to parse by tools like awk
+		templateText = templates.QuietAnalysis
+	}
+
+	// parse the template
+	analysisTemplate, parseError := template.New("Analysis").Parse(templateText)
+	if parseError != nil {
+		return parseError
+	}
+
+	renderError := analysisTemplate.Execute(os.Stdout, analysisResultViewModel)
+	if renderError != nil {
+		return renderError
+	}
+
+	return nil
 }
 
 // Status displays the spam control status.
