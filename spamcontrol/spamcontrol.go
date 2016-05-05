@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/andreaskoch/ga-spam-control/api"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
@@ -13,6 +14,10 @@ type SpamController interface {
 	// Remove the referrer spam controls from the account with the given accountID.
 	// Returns an error if the removal failed.
 	Remove(accountID string) error
+
+	// Analyze checks the given account for referrer spam and returns the result
+	// of the analysis as a view model. Returns an error if the analysis failed.
+	DetectSpam(accountID string) (AnalysisResult, error)
 
 	// Status collects the current spam-control status of all accessible
 	// analytics accounts. It returns the a StateOverview model with the Status
@@ -50,20 +55,30 @@ func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
 		filterFactory:      filterFactory,
 	}
 
+	analyticsDataProvider := &remoteAnalyticsDataProvider{
+		analyticsAPI: analyticsAPI,
+	}
+
+	spamDetector := &detector.AzureMLSpamDetection{}
+
 	return &SpamControl{
-		accountProvider: accountProvider,
-		filterFactory:   filterFactory,
-		filterProvider:  filterProvider,
+		accountProvider:       accountProvider,
+		filterFactory:         filterFactory,
+		filterProvider:        filterProvider,
+		analyticsDataProvider: analyticsDataProvider,
+		spamDetector:          spamDetector,
 	}
 }
 
 // The SpamControl type provides functions for
 // managing Google Analtics spam filters.
 type SpamControl struct {
-	accountProvider accountProvider
-	domainProvider  spamDomainProvider
-	filterFactory   filterFactory
-	filterProvider  filterProvider
+	accountProvider       accountProvider
+	domainProvider        spamDomainProvider
+	filterFactory         filterFactory
+	filterProvider        filterProvider
+	analyticsDataProvider analyticsDataProvider
+	spamDetector          detector.SpamDetector
 }
 
 // Remove the referrer spam controls from the account with the given accountID.
@@ -89,6 +104,73 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 	}
 
 	return nil
+}
+
+// DetectSpam checks the given account for referrer spam.
+// Returns an error if the analysis failed.
+func (spamControl *SpamControl) DetectSpam(accountID string) (AnalysisResult, error) {
+
+	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID)
+	if analyticsDataError != nil {
+		return AnalysisResult{}, analyticsDataError
+	}
+
+	ratedAnalyticsData, spamDetectionError := spamControl.spamDetector.GetSpamRating(analyticsData)
+	if spamDetectionError != nil {
+		return AnalysisResult{}, spamDetectionError
+	}
+
+	// get all spam domains
+	spamDomainMap := make(map[string][]SpamDomain)
+	for _, row := range ratedAnalyticsData {
+		if !row.IsSpam {
+			continue
+		}
+
+		spamDomainMap[row.Source] = append(spamDomainMap[row.Source], SpamDomain{
+			DomainName:      row.Source,
+			SpamProbability: row.Probability,
+		})
+	}
+
+	var spamDomains []SpamDomain
+	for domainName, domains := range spamDomainMap {
+
+		propability := getAverageProbability(domains)
+		if propability < 0.75 {
+			continue
+		}
+
+		spamDomains = append(spamDomains, SpamDomain{
+			DomainName:      domainName,
+			SpamProbability: propability,
+		})
+	}
+
+	// sort the domains by name
+	SortSpamDomainsBy(spamDomainsByName).Sort(spamDomains)
+
+	// assemble a view model
+	spamStatusModel := AnalysisResult{
+		AccountID:   accountID,
+		SpamDomains: spamDomains,
+	}
+
+	return spamStatusModel, nil
+}
+
+func getAverageProbability(spamDomains []SpamDomain) float64 {
+	if len(spamDomains) == 0 {
+		return 0.0
+	}
+
+	totalProbability := 0.0
+	for _, spamDomain := range spamDomains {
+		totalProbability += spamDomain.SpamProbability
+	}
+
+	numberOfDomains := float64(len(spamDomains))
+	return totalProbability / numberOfDomains
 }
 
 // GlobalStatus collects the current spam-control status of all accessible

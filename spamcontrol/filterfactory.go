@@ -23,7 +23,7 @@ type spamFilterFactory struct {
 // GetNewFilters returns a list of new api.Filter models.
 func (filterFactory spamFilterFactory) GetNewFilters() ([]api.Filter, error) {
 
-	filters := make([]api.Filter, 0)
+	var filters []api.Filter
 
 	// get the latest referrer spam domain names
 	domainNames, domainNameError := filterFactory.domainProvider.GetSpamDomains()

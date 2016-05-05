@@ -8,6 +8,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 -
 
+## v0.3.0
+
+### Added
+
+- Add `detect-spam` action which analyzes the last 30 days of analytics data for referrer spam
+
 ## v0.2.0
 
 ### Changed

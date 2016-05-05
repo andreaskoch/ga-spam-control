@@ -63,6 +63,28 @@ func (service *GoogleAnalytics) GetAccounts() ([]Account, error) {
 	return results.Items, nil
 }
 
+// GetAnalyticsData returns analytics data from the given profile/view id.
+func (service *GoogleAnalytics) GetAnalyticsData(profileID string, numberOfDays int) (AnalyticsData, error) {
+
+	uri := fmt.Sprintf("https://%s/analytics/v3/data/ga?start-date=%vdaysAgo&end-date=yesterday&_src=embed-api%%3Av1&ids=ga%%3A%s&metrics=ga%%3Asessions%%2Cga%%3AbounceRate%%2Cga%%3ApageviewsPerSession%%2Cga%%3AtimeOnPage&dimensions=ga%%3AuserType%%2Cga%%3AfullReferrer%%2Cga%%3Asource%%2Cga%%3Amedium%%2Cga%%3AnetworkDomain%%2Cga%%3AnetworkLocation%%2Cga%%3AlandingPagePath&max-results=100000&output=dataTable", service.apiHostname, numberOfDays, profileID)
+	response, requestError := service.client.Get(uri)
+	if requestError != nil {
+		return AnalyticsData{}, fmt.Errorf("The GET request against %q failed: %s", uri, requestError.Error())
+	}
+
+	if err := handleErrors(response); err != nil {
+		return AnalyticsData{}, fmt.Errorf("The GET request against %q did not succeed: %s", uri, err.Error())
+	}
+
+	serializer := &analyticsDataResultsSerializer{}
+	results, deserializeError := serializer.Deserialize(response.Body)
+	if deserializeError != nil {
+		return AnalyticsData{}, fmt.Errorf("The analytics data response could not be deserialized: %s", deserializeError.Error())
+	}
+
+	return results.Data, nil
+}
+
 // GetFilters returns all filters for the account with the given account ID.
 func (service *GoogleAnalytics) GetFilters(accountID string) ([]Filter, error) {
 
@@ -186,7 +208,7 @@ func (service *GoogleAnalytics) UpdateFilter(accountID string, filterID string, 
 	}
 
 	if err := handleErrors(response); err != nil {
-		return Filter{}, fmt.Errorf("The POST request against %q did not succeed: %s", uri, err.Error())
+		return Filter{}, fmt.Errorf("The PUT request against %q did not succeed: %s", uri, err.Error())
 	}
 
 	createdFilter, deserializeError := serializer.Deserialize(response.Body)

@@ -17,16 +17,16 @@ type spamDomainProvider interface {
 // The remoteSpamDomainProvider fetches the list
 // of referrer spam domain names from a remote URL.
 type remoteSpamDomainProvider struct {
-	domainListUrl string
+	domainListURL string
 }
 
 // GetSpamDomains returns a list of referrer spam domain names.
 func (spamDomainProvider *remoteSpamDomainProvider) GetSpamDomains() ([]string, error) {
 
 	// request the domain names from the remote source
-	response, requestError := http.Get(spamDomainProvider.domainListUrl)
+	response, requestError := http.Get(spamDomainProvider.domainListURL)
 	if requestError != nil {
-		return nil, fmt.Errorf("Failed to get URL %q: %s", spamDomainProvider.domainListUrl, requestError.Error())
+		return nil, fmt.Errorf("Failed to get URL %q: %s", spamDomainProvider.domainListURL, requestError.Error())
 	}
 
 	// read the domain names line-by-line
