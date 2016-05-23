@@ -43,11 +43,14 @@ func (profileSerializer) Deserialize(reader io.Reader) (*Profile, error) {
 	return profile, err
 }
 
+// ProfileResults is response model for Google Analytics Profile API requests.
 type ProfileResults struct {
 	Results
 	Items []Profile `json:"items"`
 }
 
+// A Profile model contains the analytics profile details
+// such as the accoun id, name and property ids.
 type Profile struct {
 	Item
 	AccountID             string `json:"accountId"`

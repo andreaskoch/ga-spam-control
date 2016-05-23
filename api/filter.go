@@ -9,7 +9,7 @@ import (
 // toModelFilters converts []apiservice.Filter to []Filter.
 func toModelFilters(sources []apiservice.Filter) []Filter {
 
-	accounts := make([]Filter, 0)
+	var accounts []Filter
 	for _, source := range sources {
 		accounts = append(accounts, toModelFilter(source))
 	}
@@ -57,6 +57,7 @@ func toServiceFilter(source Filter) apiservice.Filter {
 	}
 }
 
+// A Filter contains information about Google Analtics view filters.
 type Filter struct {
 	AccountID      string
 	ID             string
@@ -88,6 +89,7 @@ func (filter Filter) Equals(other Filter) bool {
 	return true
 }
 
+// A FilterDetail contains the filter type and the expression of a Filter model.
 type FilterDetail struct {
 	Kind            string
 	Field           string
@@ -126,8 +128,10 @@ func filtersByName(filter1, filter2 Filter) bool {
 	return filter1.Name < filter2.Name
 }
 
+// SortFiltersBy allows to sort Filter models.
 type SortFiltersBy func(filter1, filter2 Filter) bool
 
+// Sort a slice of Filter models.
 func (by SortFiltersBy) Sort(filters []Filter) {
 	sorter := &filterSorter{
 		filters: filters,

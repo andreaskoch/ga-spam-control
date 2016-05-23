@@ -16,6 +16,7 @@ func decodeResponse(response io.Reader) (ErrorResponse, error) {
 	return errorResponse, nil
 }
 
+// ErrorResponse contains the errors details of a Google Analytics API response.
 type ErrorResponse struct {
 	Error struct {
 		Errors []struct {

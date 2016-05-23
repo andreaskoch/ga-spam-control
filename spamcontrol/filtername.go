@@ -12,9 +12,8 @@ type filterNameProvider interface {
 	// is valid or not.
 	IsValidFilterName(filerName string) bool
 
-	// GetFilterName returns the filter name
-	// for the filter with the given filter number.
-	GetFilterName(filterNumber int) string
+	// GetFilterName return a filter name for the given segment name and entry index.
+	GetFilterName(segmentName string, entryIndex int) string
 }
 
 // A spamFilterNameProvider provides
@@ -30,8 +29,7 @@ func (nameProvider spamFilterNameProvider) IsValidFilterName(filerName string) b
 	return strings.HasPrefix(filerName, nameProvider.filterNamePrefix)
 }
 
-// GetFilterName returns the filter name
-// for the filter with the given filter number.
-func (nameProvider spamFilterNameProvider) GetFilterName(filterNumber int) string {
-	return fmt.Sprintf("%s %02d", nameProvider.filterNamePrefix, filterNumber)
+// GetFilterName return a filter name for the given segment name and entry index.
+func (nameProvider spamFilterNameProvider) GetFilterName(segmentName string, entryIndex int) string {
+	return fmt.Sprintf("%s Segment %s #%03d", nameProvider.filterNamePrefix, segmentName, entryIndex)
 }

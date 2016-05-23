@@ -43,26 +43,31 @@ func (analyticsDataSerializer) Deserialize(reader io.Reader) (*AnalyticsData, er
 	return analyticsData, err
 }
 
+// AnalyticsDataResults is response model for Google Analytics data API requests.
 type AnalyticsDataResults struct {
 	Results
 	Data AnalyticsData `json:"dataTable"`
 }
 
+// AnalyticsData represents analytics reports data in columns and rows.
 type AnalyticsData struct {
 	Cols []TableColumn `json:"cols"`
 	Rows []TableRow    `json:"rows"`
 }
 
+// TableColumn defines analytics data table columns.
 type TableColumn struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`
 	Type  string `json:"type"`
 }
 
+// TableRow defines analytics data table rows.
 type TableRow struct {
 	Cell []TableCell `json:"c"`
 }
 
+// TableCell defines analytics data table cell/value.
 type TableCell struct {
 	Value string `json:"v"`
 }

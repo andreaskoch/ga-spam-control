@@ -1,3 +1,5 @@
+// Package detector contains a spam detector implementation that uses
+// Azure Machine Learning web services to detect spam in analytics data.
 package detector
 
 import (
@@ -18,12 +20,17 @@ type SpamDetector interface {
 	GetSpamRating(analyticsData api.AnalyticsData) (RatedAnalyticsData, error)
 }
 
-// AzureMLSpamDetection uses Azure ML Studio to detect spam in analytics data.
-type AzureMLSpamDetection struct {
+// New create a new SpamDetector instance.
+func New() SpamDetector {
+	return azureMLSpamDetection{}
+}
+
+// azureMLSpamDetection uses Azure ML Studio to detect spam in analytics data.
+type azureMLSpamDetection struct {
 }
 
 // GetSpamRating returns the rated spam score for the given analytics data.
-func (spamDetection AzureMLSpamDetection) GetSpamRating(analyticsData api.AnalyticsData) (RatedAnalyticsData, error) {
+func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData api.AnalyticsData) (RatedAnalyticsData, error) {
 
 	inputSerializer := &inputRequestSerializer{}
 	outputSerializer := &spamScoreResponseSerializer{}

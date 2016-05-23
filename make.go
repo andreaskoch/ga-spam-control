@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This program builds ga-spam-control.
+// The make.go script builds the ga-spam-control command-line utility.
 //
 // $ go run make.go -install
 //

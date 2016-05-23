@@ -1,3 +1,4 @@
+// Package spamcontrol contains all business logic for spam-filter manipulations.
 package spamcontrol
 
 import (
@@ -17,7 +18,13 @@ type SpamController interface {
 
 	// Analyze checks the given account for referrer spam and returns the result
 	// of the analysis as a view model. Returns an error if the analysis failed.
-	DetectSpam(accountID string) (AnalysisResult, error)
+	DetectSpam(accountID string, numberOfDaysToLookBack int) (AnalysisResult, error)
+
+	// UpdateSpamDomains updates the referrer spam domain list.
+	UpdateSpamDomains() (UpdateResult, error)
+
+	// ListSpamDomains returns a list of all known spam domains
+	ListSpamDomains() ([]string, error)
 
 	// Status collects the current spam-control status of all accessible
 	// analytics accounts. It returns the a StateOverview model with the Status
@@ -28,7 +35,7 @@ type SpamController interface {
 	// AccountStatus returns the current spam-control status of the account
 	// with the given account ID. Returns an error if the status cannot be
 	// determined.
-	AccountStatus(accountID string) (status.Status, error)
+	AccountStatus(accountID string) (InstallationStatus, error)
 
 	// Update the referrer spam controls for the account with the given accountID.
 	// Returns an error if the update failed.
@@ -36,49 +43,48 @@ type SpamController interface {
 }
 
 // New creates a new spam control instance.
-func New(analyticsAPI api.AnalyticsAPI) *SpamControl {
+func New(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector, spamRepository SpamDomainRepository) *SpamControl {
 
 	accountProvider := remoteAccountProvider{analyticsAPI}
 
-	domainProvider := &remoteSpamDomainProvider{"https://raw.githubusercontent.com/ddofborg/analytics-ghost-spam-list/master/adwordsrobot.com-spam-list.txt"}
-	filterNameProvider := &spamFilterNameProvider{"ga-spam-control"}
+	spamAnalysis := &dynamicSpamAnalysis{
+		analyticsDataProvider: &remoteAnalyticsDataProvider{
+			analyticsAPI: analyticsAPI,
+		},
+		spamDetector: spamDetector,
+	}
 
-	filterFactory := &spamFilterFactory{
-		domainProvider:       domainProvider,
+	filterNameProvider := &spamFilterNameProvider{"Referrer Spam Block"}
+
+	filterFactory := &googleAnalyticsFilterFactory{
 		filterNameProvider:   filterNameProvider,
 		filterValueMaxLength: 255,
 	}
 
 	filterProvider := &remoteFilterProvider{
-		analyticsAPI:       analyticsAPI,
+		analyticsAPI: analyticsAPI,
+
+		spamRepository: spamRepository,
+
 		filterNameProvider: filterNameProvider,
 		filterFactory:      filterFactory,
 	}
 
-	analyticsDataProvider := &remoteAnalyticsDataProvider{
-		analyticsAPI: analyticsAPI,
-	}
-
-	spamDetector := &detector.AzureMLSpamDetection{}
-
 	return &SpamControl{
-		accountProvider:       accountProvider,
-		filterFactory:         filterFactory,
-		filterProvider:        filterProvider,
-		analyticsDataProvider: analyticsDataProvider,
-		spamDetector:          spamDetector,
+		accountProvider: accountProvider,
+		filterProvider:  filterProvider,
+		spamAnalysis:    spamAnalysis,
+		spamRepository:  spamRepository,
 	}
 }
 
 // The SpamControl type provides functions for
 // managing Google Analtics spam filters.
 type SpamControl struct {
-	accountProvider       accountProvider
-	domainProvider        spamDomainProvider
-	filterFactory         filterFactory
-	filterProvider        filterProvider
-	analyticsDataProvider analyticsDataProvider
-	spamDetector          detector.SpamDetector
+	accountProvider accountProvider
+	filterProvider  filterProvider
+	spamAnalysis    spamAnalysis
+	spamRepository  SpamDomainRepository
 }
 
 // Remove the referrer spam controls from the account with the given accountID.
@@ -106,71 +112,71 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 	return nil
 }
 
-// DetectSpam checks the given account for referrer spam.
-// Returns an error if the analysis failed.
-func (spamControl *SpamControl) DetectSpam(accountID string) (AnalysisResult, error) {
-
-	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID)
-	if analyticsDataError != nil {
-		return AnalysisResult{}, analyticsDataError
+// UpdateSpamDomains updates the referrer spam domain list.
+func (spamControl *SpamControl) UpdateSpamDomains() (UpdateResult, error) {
+	unchanged, added, removed, err := spamControl.spamRepository.UpdateSpamDomains()
+	if err != nil {
+		return UpdateResult{}, nil
 	}
 
-	ratedAnalyticsData, spamDetectionError := spamControl.spamDetector.GetSpamRating(analyticsData)
-	if spamDetectionError != nil {
-		return AnalysisResult{}, spamDetectionError
-	}
+	var domainUpdates []DomainUpdate
 
-	// get all spam domains
-	spamDomainMap := make(map[string][]SpamDomain)
-	for _, row := range ratedAnalyticsData {
-		if !row.IsSpam {
-			continue
-		}
-
-		spamDomainMap[row.Source] = append(spamDomainMap[row.Source], SpamDomain{
-			DomainName:      row.Source,
-			SpamProbability: row.Probability,
+	// unchanged
+	for _, domain := range unchanged {
+		domainUpdates = append(domainUpdates, DomainUpdate{
+			UpdateType: Unchanged,
+			Domainname: domain,
 		})
 	}
 
-	var spamDomains []SpamDomain
-	for domainName, domains := range spamDomainMap {
-
-		propability := getAverageProbability(domains)
-		if propability < 0.75 {
-			continue
-		}
-
-		spamDomains = append(spamDomains, SpamDomain{
-			DomainName:      domainName,
-			SpamProbability: propability,
+	// added
+	for _, domain := range added {
+		domainUpdates = append(domainUpdates, DomainUpdate{
+			UpdateType: Added,
+			Domainname: domain,
 		})
 	}
 
-	// sort the domains by name
-	SortSpamDomainsBy(spamDomainsByName).Sort(spamDomains)
-
-	// assemble a view model
-	spamStatusModel := AnalysisResult{
-		AccountID:   accountID,
-		SpamDomains: spamDomains,
+	// removed
+	for _, domain := range removed {
+		domainUpdates = append(domainUpdates, DomainUpdate{
+			UpdateType: Removed,
+			Domainname: domain,
+		})
 	}
 
-	return spamStatusModel, nil
+	// return an error if the list if empty
+	if len(domainUpdates) == 0 {
+		return UpdateResult{}, fmt.Errorf("Something is wrong. No domains received.")
+	}
+
+	// sort the list
+	SortDomainUpdateBy(domainUpdatesByName).Sort(domainUpdates)
+
+	return UpdateResult{
+		Statistics: DomainUpdateStatistics{
+			Unchanged: len(unchanged),
+			Added:     len(added),
+			Removed:   len(removed),
+			Total:     len(domainUpdates),
+		},
+		Domains: domainUpdates,
+	}, nil
 }
 
-func getAverageProbability(spamDomains []SpamDomain) float64 {
-	if len(spamDomains) == 0 {
-		return 0.0
+// ListSpamDomains returns a list of all known spam domains
+func (spamControl *SpamControl) ListSpamDomains() ([]string, error) {
+	return spamControl.spamRepository.GetSpamDomains()
+}
+
+// DetectSpam checks the given account for referrer spam.
+// Returns an error if the analysis failed.
+func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookBack int) (AnalysisResult, error) {
+	if numberOfDaysToLookBack < 1 {
+		return AnalysisResult{}, fmt.Errorf("The specified number of days to look back cannot be below 1")
 	}
 
-	totalProbability := 0.0
-	for _, spamDomain := range spamDomains {
-		totalProbability += spamDomain.SpamProbability
-	}
-
-	numberOfDomains := float64(len(spamDomains))
-	return totalProbability / numberOfDomains
+	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.75)
 }
 
 // GlobalStatus collects the current spam-control status of all accessible
@@ -184,13 +190,17 @@ func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 		return StateOverview{}, accountsError
 	}
 
+	knownSpamDomains, spamDomainsError := spamControl.spamRepository.GetSpamDomains()
+	if spamDomainsError != nil {
+		return StateOverview{}, spamDomainsError
+	}
+
 	overviewModel := &StateOverview{
-		OverallStatus: status.NotSet,
-		Accounts:      make([]AccountStatus, 0),
+		Accounts:         make([]AccountStatus, 0),
+		KnownSpamDomains: len(knownSpamDomains),
 	}
 
 	// get the status for each account
-	accountStatuses := make([]status.Status, 0, len(accounts))
 	for _, account := range accounts {
 
 		accountStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
@@ -204,15 +214,8 @@ func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 			Status:      accountStatus,
 		}
 
-		// capture the account status for the calculation of the
-		// overall status
-		accountStatuses = append(accountStatuses, accountStatus)
-
 		overviewModel.Accounts = append(overviewModel.Accounts, accountStatusModel)
 	}
-
-	// set the overall status
-	overviewModel.OverallStatus = status.CalculateGlobalStatus(accountStatuses)
 
 	return *overviewModel, nil
 }
@@ -220,20 +223,20 @@ func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 // AccountStatus returns the current spam-control status of the account
 // with the given account ID. Returns an error if the status cannot be
 // determined.
-func (spamControl *SpamControl) AccountStatus(accountID string) (status.Status, error) {
+func (spamControl *SpamControl) AccountStatus(accountID string) (InstallationStatus, error) {
 	// get the requested account
 	account, accountError := spamControl.accountProvider.GetAccount(accountID)
 	if accountError != nil {
-		return status.NotSet, accountError
+		return InstallationStatus{}, accountError
 	}
 
 	// get the accounts' status
-	accountStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
+	installationStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
 	if accountStatusError != nil {
-		return status.NotSet, accountStatusError
+		return InstallationStatus{}, accountStatusError
 	}
 
-	return accountStatus, nil
+	return installationStatus, nil
 }
 
 // Update the referrer spam controls for the account with the given accountID.
@@ -260,6 +263,7 @@ func (spamControl *SpamControl) Update(accountID string) error {
 
 		// remove obsolete filters
 		if filterStatus.Status() == status.Obsolete {
+			fmt.Printf("Removing filter %q\n", filterStatus.Filter().Name)
 			removeError := spamControl.filterProvider.RemoveFilter(account.ID, filterStatus.Filter().ID)
 			if removeError != nil {
 				return removeError
@@ -270,6 +274,7 @@ func (spamControl *SpamControl) Update(accountID string) error {
 
 		// update outdated filters
 		if filterStatus.Status() == status.Outdated {
+			fmt.Printf("Updating filter %q\n", filterStatus.Filter().Name)
 			_, updateError := spamControl.filterProvider.UpdateFilter(account.ID, filterStatus.Filter().ID, filterStatus.Filter())
 			if updateError != nil {
 				return updateError
@@ -280,6 +285,7 @@ func (spamControl *SpamControl) Update(accountID string) error {
 
 		// create new filters
 		if filterStatus.Status() == status.NotInstalled {
+			fmt.Printf("Creating filter %q\n", filterStatus.Filter().Name)
 			_, createError := spamControl.filterProvider.CreateFilter(account.ID, filterStatus.Filter())
 			if createError != nil {
 				return createError
@@ -292,4 +298,18 @@ func (spamControl *SpamControl) Update(accountID string) error {
 	}
 
 	return nil
+}
+
+func getAverageProbability(spamDomains []SpamDomain) float64 {
+	if len(spamDomains) == 0 {
+		return 0.0
+	}
+
+	totalProbability := 0.0
+	for _, spamDomain := range spamDomains {
+		totalProbability += spamDomain.SpamProbability
+	}
+
+	numberOfDomains := float64(len(spamDomains))
+	return totalProbability / numberOfDomains
 }

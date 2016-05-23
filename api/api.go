@@ -1,3 +1,5 @@
+// Package api implements an analytics API interface for interacting
+// with the Google Analytics Account and Filter APIs.
 package api
 
 import (
@@ -14,7 +16,7 @@ type AnalyticsAPI interface {
 	GetAccounts() ([]Account, error)
 
 	// GetAnalyticsData analytics data for the given account ID.
-	GetAnalyticsData(accountID string) (AnalyticsData, error)
+	GetAnalyticsData(accountID string, numberOfDays int) (AnalyticsData, error)
 
 	// CreateFilter creates a new Filter for the given account ID.
 	CreateFilter(accountID string, filter Filter) (Filter, error)
@@ -64,7 +66,7 @@ func (api *API) GetAccounts() ([]Account, error) {
 }
 
 // GetAnalyticsData analytics data for the given account ID.
-func (api *API) GetAnalyticsData(accountID string) (AnalyticsData, error) {
+func (api *API) GetAnalyticsData(accountID string, numberOfDays int) (AnalyticsData, error) {
 
 	// get the profiles to which the filter will be assigned
 	profiles, profilesError := api.GetProfiles(accountID)
@@ -77,7 +79,6 @@ func (api *API) GetAnalyticsData(accountID string) (AnalyticsData, error) {
 	}
 
 	profile := profiles[0]
-	numberOfDays := 30
 	serviceData, analyticsDataErr := api.service.GetAnalyticsData(profile.ID, numberOfDays)
 	if analyticsDataErr != nil {
 		return AnalyticsData{}, analyticsDataErr

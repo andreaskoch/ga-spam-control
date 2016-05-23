@@ -7,8 +7,10 @@ import (
 	"github.com/andreaskoch/ga-spam-control/api/apiservice"
 )
 
+// AnalyticsData is a set of analytics data entries.
 type AnalyticsData []AnalyticsDataRow
 
+// AnalyticsDataRow contains a single analytics data record.
 type AnalyticsDataRow struct {
 	// Dimensions
 	UserType        string

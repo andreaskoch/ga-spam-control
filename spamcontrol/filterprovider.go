@@ -1,13 +1,11 @@
 package spamcontrol
 
 import (
-	"fmt"
-	"sort"
-
 	"github.com/andreaskoch/ga-spam-control/api"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
+// A filterProvider offers CRUD operations for analytics filters.
 type filterProvider interface {
 	// GetExistingFilters returns a list of all existing api.Filter models
 	// for the given account ID.
@@ -23,14 +21,19 @@ type filterProvider interface {
 	RemoveFilter(accountID, filterID string) error
 
 	// GetAccountStatus returns the overall status for the given account ID.
-	GetAccountStatus(accountID string) (status.Status, error)
+	GetAccountStatus(accountID string) (InstallationStatus, error)
 
 	// GetFilterStatuses returns the individual filter statuses for the given account.
 	GetFilterStatuses(accountID string) (FilterStatuses, error)
 }
 
+// A remoteFilterProvider offers CRUD operations for analytics filters
+// the an analytics API.
 type remoteFilterProvider struct {
-	analyticsAPI       api.AnalyticsAPI
+	analyticsAPI api.AnalyticsAPI
+
+	spamRepository SpamDomainRepository
+
 	filterNameProvider filterNameProvider
 	filterFactory      filterFactory
 }
@@ -74,11 +77,11 @@ func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID stri
 }
 
 // GetAccountStatus returns the status of for the given account ID.
-func (filterProvider remoteFilterProvider) GetAccountStatus(accountID string) (status.Status, error) {
+func (filterProvider remoteFilterProvider) GetAccountStatus(accountID string) (InstallationStatus, error) {
 
 	filterStatuses, filterStatusError := filterProvider.GetFilterStatuses(accountID)
 	if filterStatusError != nil {
-		return status.NotSet, filterStatusError
+		return InstallationStatus{}, filterStatusError
 	}
 
 	return filterStatuses.OverallStatus(), nil
@@ -92,8 +95,14 @@ func (filterProvider remoteFilterProvider) GetFilterStatuses(accountID string) (
 		return nil, existingFilterError
 	}
 
+	// get the latest referrer spam domain names
+	domainNames, spamRepositoryError := filterProvider.spamRepository.GetSpamDomains()
+	if spamRepositoryError != nil {
+		return nil, spamRepositoryError
+	}
+
 	// get the latest filters
-	latestFilters, latestFiltersError := filterProvider.filterFactory.GetNewFilters()
+	latestFilters, latestFiltersError := filterProvider.filterFactory.GetNewFilters(domainNames)
 	if latestFiltersError != nil {
 		return nil, latestFiltersError
 	}
@@ -149,6 +158,7 @@ func getFilterStatuses(existingFilters, latestFilters []api.Filter) FilterStatus
 	return statuses
 }
 
+// getFilterNameMap groups a slice api.Filter models by their name.
 func getFilterNameMap(filters []api.Filter) map[string]api.Filter {
 	nameMap := make(map[string]api.Filter)
 	for _, filter := range filters {
@@ -156,77 +166,4 @@ func getFilterNameMap(filters []api.Filter) map[string]api.Filter {
 	}
 
 	return nameMap
-}
-
-// FilterStatuses are a list of of FilterStatus objects.
-type FilterStatuses []FilterStatus
-
-// OverallStatus calculates an overall status for all status in this list.
-func (filterStatuses FilterStatuses) OverallStatus() status.Status {
-	var statuses []status.Status
-	for _, filterStatus := range filterStatuses {
-		statuses = append(statuses, filterStatus.Status())
-	}
-
-	return status.CalculateGlobalStatus(statuses)
-}
-
-// newFilterStatus creates a new FilterStatus instance.
-func newFilterStatus(filter api.Filter, status status.Status) FilterStatus {
-	return FilterStatus{filter, status}
-}
-
-// FilterStatus represents the status for a given api.Filter.
-type FilterStatus struct {
-	filter api.Filter
-	status status.Status
-}
-
-func (filterStatus FilterStatus) String() string {
-	return fmt.Sprintf("%s (%s)", filterStatus.filter.ID, filterStatus.status)
-}
-
-// Filter returns the api.Filter.
-func (filterStatus FilterStatus) Filter() api.Filter {
-	return filterStatus.filter
-}
-
-// Status returns the status.Status.
-func (filterStatus FilterStatus) Status() status.Status {
-	return filterStatus.status
-}
-
-// filterStatusesByName can be used to sort filterStatuses by name (ascending).
-func filterStatusesByName(filterStatus1, filterStatus2 FilterStatus) bool {
-	return filterStatus1.Filter().Name < filterStatus2.Filter().Name
-}
-
-// The SortFiltersBy function sorts two FilterStatus objects.
-type SortFiltersBy func(filter1, filter2 FilterStatus) bool
-
-// Sort a list of FilterStatus objects.
-func (by SortFiltersBy) Sort(filterStatuses []FilterStatus) {
-	sorter := &filterStatusSorter{
-		filterStatuses: filterStatuses,
-		by:             by,
-	}
-
-	sort.Sort(sorter)
-}
-
-type filterStatusSorter struct {
-	filterStatuses []FilterStatus
-	by             SortFiltersBy
-}
-
-func (sorter *filterStatusSorter) Len() int {
-	return len(sorter.filterStatuses)
-}
-
-func (sorter *filterStatusSorter) Swap(i, j int) {
-	sorter.filterStatuses[i], sorter.filterStatuses[j] = sorter.filterStatuses[j], sorter.filterStatuses[i]
-}
-
-func (sorter *filterStatusSorter) Less(i, j int) bool {
-	return sorter.by(sorter.filterStatuses[i], sorter.filterStatuses[j])
 }

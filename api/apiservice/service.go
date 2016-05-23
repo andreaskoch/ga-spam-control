@@ -1,3 +1,5 @@
+// Package apiservice implements a Google Analytics API client for the Google
+// Analytics Acccount and Filter APIs.
 package apiservice
 
 import (
@@ -14,6 +16,9 @@ import (
 // const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
 const GoogleAnalyticsHostname = "www.googleapis.com"
 
+// New creates a new Google Analytics api service instance with the given
+// client token provider and clientID and clientSecret.
+// Returns an error if the GoogleAnalytics service could not be instantiated.
 func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (*GoogleAnalytics, error) {
 
 	// oAuth code receiver
@@ -36,6 +41,8 @@ func New(tokenStore apicredentials.TokenStorer, clientID, clientSecret string) (
 	}, nil
 }
 
+// GoogleAnalytics offers the ability to interact with the Google Analytics
+// Account and Filters APIs using an authenticated (oAuth) HTTP client.
 type GoogleAnalytics struct {
 	apiHostname string
 	client      *http.Client
@@ -157,22 +164,22 @@ func (service *GoogleAnalytics) CreateFilter(accountID string, filter Filter) (F
 	return *createdFilter, nil
 }
 
-// CreateFilter creates a new filter for the given account ID.
-func (service *GoogleAnalytics) CreateProfileFilterLink(accountID, profileId, webPropertyId, filterId string) error {
+// CreateProfileFilterLink creates a new filter for the given account ID.
+func (service *GoogleAnalytics) CreateProfileFilterLink(accountID, profileID, webPropertyID, filterID string) error {
 
 	body := fmt.Sprintf(`{
 	"filterRef": {
 		"id": "%s"
 	}
-	}`, filterId)
+	}`, filterID)
 
 	reader := strings.NewReader(body)
 
 	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/webproperties/%s/profiles/%s/profileFilterLinks",
 		service.apiHostname,
 		accountID,
-		webPropertyId,
-		profileId,
+		webPropertyID,
+		profileID,
 	)
 	response, requestError := service.client.Post(uri, "application/json; charset=UTF-8", reader)
 	if requestError != nil {
@@ -189,9 +196,20 @@ func (service *GoogleAnalytics) CreateProfileFilterLink(accountID, profileId, we
 // UpdateFilter updates the given filter.
 func (service *GoogleAnalytics) UpdateFilter(accountID string, filterID string, filter Filter) (Filter, error) {
 
+	// assemble the update object
+	filterUpdate := FilterUpdate{
+		ID:   filterID,
+		Name: filter.Name,
+		Type: filter.Type,
+		ExcludeDetails: FilterDetailUpdate{
+			Field:           filter.ExcludeDetails.Field,
+			ExpressionValue: filter.ExcludeDetails.ExpressionValue,
+		},
+	}
+
 	buffer := new(bytes.Buffer)
-	serializer := &filterSerializer{}
-	serializeError := serializer.Serialize(buffer, &filter)
+	updateSerializer := &filterUpdateSerializer{}
+	serializeError := updateSerializer.Serialize(buffer, &filterUpdate)
 	if serializeError != nil {
 		return Filter{}, fmt.Errorf("The given filter model could not be serialized: %s", serializeError.Error())
 	}
@@ -202,6 +220,8 @@ func (service *GoogleAnalytics) UpdateFilter(accountID string, filterID string, 
 		return Filter{}, fmt.Errorf("The PUT request could not be created: %s", createRequestError.Error())
 	}
 
+	request.Header.Add("Content-Type", "application/json")
+
 	response, requestError := service.client.Do(request)
 	if requestError != nil {
 		return Filter{}, fmt.Errorf("The PUT request against %q failed: %s", uri, requestError.Error())
@@ -211,12 +231,13 @@ func (service *GoogleAnalytics) UpdateFilter(accountID string, filterID string, 
 		return Filter{}, fmt.Errorf("The PUT request against %q did not succeed: %s", uri, err.Error())
 	}
 
-	createdFilter, deserializeError := serializer.Deserialize(response.Body)
+	filterSerializer := &filterSerializer{}
+	updatedFilter, deserializeError := filterSerializer.Deserialize(response.Body)
 	if deserializeError != nil {
 		return Filter{}, fmt.Errorf("The filters response could not be deserialized: %s", deserializeError.Error())
 	}
 
-	return *createdFilter, nil
+	return *updatedFilter, nil
 
 }
 
