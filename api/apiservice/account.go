@@ -25,15 +25,19 @@ func (accountResultsSerializer) Deserialize(reader io.Reader) (*AccountResults, 
 	return accountResults, err
 }
 
+// AccountResults is response model for Google Analytics Account API requests.
 type AccountResults struct {
 	Results
 	Items []Account `json:"items"`
 }
 
+// AccountPermissions contains the effictive permissions for an account.
 type AccountPermissions struct {
 	Effective []string `json:"effective"`
 }
 
+// The Account model contains account details
+// such as the account ID, name and type.
 type Account struct {
 	Item
 	Name        string             `json:"name"`

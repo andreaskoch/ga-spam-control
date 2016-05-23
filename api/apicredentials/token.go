@@ -1,3 +1,5 @@
+// Package apicredentials contains the TokenStorer interface that
+// is used as the oAuth token provider for the Google Analytics API.
 package apicredentials
 
 import "golang.org/x/oauth2"

@@ -9,12 +9,12 @@ var PrettyAnalysis = `{{if .SpamDomains -}}
 {{end -}}
 {{else -}}
 No referrer spam domains detected
-{{- end}}`
+{{end}}`
 
 // QuietAnalysis contains the minimal  template for displaying
 // the spam analysis results for a given analytics account.
 var QuietAnalysis = `{{if .SpamDomains -}}
 {{range .SpamDomains -}}
 {{.DomainName}}
-{{end}}
-{{- end}}`
+{{end -}}
+{{end}}`

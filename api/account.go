@@ -11,7 +11,7 @@ import (
 // toModelAccounts converts []apiservice.Account to []Account.
 func toModelAccounts(sources []apiservice.Account) []Account {
 
-	accounts := make([]Account, 0)
+	var accounts []Account
 	for _, source := range sources {
 		accounts = append(accounts, toModelAccount(source))
 	}
@@ -30,6 +30,7 @@ func toModelAccount(source apiservice.Account) Account {
 	}
 }
 
+// An Account contains all parameters of an analytics account.
 type Account struct {
 	ID   string
 	Kind string
@@ -53,8 +54,10 @@ func accountsByID(account1, account2 Account) bool {
 	return fmt.Sprintf("%012d", int(account1ID)) < fmt.Sprintf("%012d", int(account2ID))
 }
 
+// SortAccountsBy sorts two Account models.
 type SortAccountsBy func(account1, account2 Account) bool
 
+// Sort a slice of Account models.
 func (by SortAccountsBy) Sort(accounts []Account) {
 	sorter := &accountSorter{
 		accounts: accounts,

@@ -5,7 +5,7 @@ import "github.com/andreaskoch/ga-spam-control/api/apiservice"
 // toModelProfiles converts []apiservice.Profile to []Profile.
 func toModelProfiles(sources []apiservice.Profile) []Profile {
 
-	accounts := make([]Profile, 0)
+	var accounts []Profile
 	for _, source := range sources {
 		accounts = append(accounts, toModelProfile(source))
 	}
@@ -49,6 +49,7 @@ func toServiceProfile(source Profile) apiservice.Profile {
 	}
 }
 
+// A Profile contains information about Google Analytics views.
 type Profile struct {
 	ID   string
 	Kind string

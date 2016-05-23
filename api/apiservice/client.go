@@ -12,9 +12,9 @@ import (
 )
 
 // getAnalyticsClientConfig returns the oAuth client configuration for the Google Analytics API.
-func getAnalyticsClientConfig(clientId, clientSecret, redirectURL string) *oauth2.Config {
+func getAnalyticsClientConfig(clientID, clientSecret, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     clientId,
+		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL,
 		Scopes: []string{
@@ -104,39 +104,4 @@ func getAnalyticsClient(store apicredentials.TokenStorer, oAuthClientConfig *oau
 
 	client := oAuthClientConfig.Client(oauth2.NoContext, exchangeToken)
 	return client, nil
-}
-
-// getAccounts returns all accessible accounts.
-func getAccounts(apiClient *http.Client) error {
-
-	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts", GoogleAnalyticsHostname)
-	response, apiError := apiClient.Get(uri)
-	if apiError != nil {
-		return apiError
-	}
-
-	serializer := &accountResultsSerializer{}
-	results, deserializeError := serializer.Deserialize(response.Body)
-	if deserializeError != nil {
-		return deserializeError
-	}
-
-	for _, account := range results.Items {
-		log.Println("Account ID: ", account.ID)
-	}
-
-	return nil
-}
-
-// getFilters returns all filters for the account with the given account ID.
-func getFilters(apiClient *http.Client, accountId string) error {
-
-	uri := fmt.Sprintf("https://%s/analytics/v3/management/accounts/%s/filters", GoogleAnalyticsHostname, accountId)
-	response, err := apiClient.Get(uri)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(response)
-	return nil
 }

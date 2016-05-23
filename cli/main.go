@@ -1,3 +1,4 @@
+// Package cli provides the commandline interface for the spamcontrol package.
 package main
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/andreaskoch/ga-spam-control/cli/templates"
 	"github.com/andreaskoch/ga-spam-control/cli/token"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/mitchellh/go-homedir"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -22,27 +24,33 @@ func main() {
 // handleCommandlineArguments parses the given arguments
 // and performs the selected action.
 func handleCommandlineArguments(args []string) {
-	app := kingpin.New("ga-spam-control", "Command-line utility for blocking referrer spam from your Google Analytics accounts")
-	app.Version("0.2.0")
+	app := kingpin.New("ga-spam-control", "Command-line utility for keeping your Google Analytics referrer spam filters up-to-date")
+	app.Version("0.4.0")
 
-	status := app.Command("status", "Display the current spam control status of your accounts")
-	statusQuiet := status.Flag("quiet", "Display status in a parsable format").Short('q').Bool()
+	status := app.Command("show-status", "Display the spam-control status of your accounts")
 	statusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
+	statusQuiet := status.Flag("quiet", "Display spam-protection status in a parsable format").Short('q').Bool()
 
-	update := app.Command("update", "Update your spam control settings")
+	update := app.Command("update-filters", "Update the spam filters for the given account")
 	updateAccountID := update.Arg("accountID", "Google Analytics account ID").Required().String()
 
-	remove := app.Command("remove", "Remove spam control from your accounts")
+	remove := app.Command("remove-filters", "Remove all spam filters from an account")
 	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
 
-	detectSpam := app.Command("detect-spam", "Check the given account for referrer spam")
-	detectSpamQuiet := detectSpam.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
-	detectSpamAccountID := detectSpam.Arg("accountID", "Google Analytics account ID").Required().String()
+	listSpamDomains := app.Command("list-spam-domains", "List all currently known spam domains")
+
+	updateSpamDomains := app.Command("update-spam-domains", "Update the spam domain list")
+	updateSpamDomainsQuiet := updateSpamDomains.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
+
+	findSpamDomains := app.Command("find-spam-domains", "Find new referrer spam domains in your analytics data")
+	findSpamDomainsAccountID := findSpamDomains.Arg("accountID", "Google Analytics account ID").Required().String()
+	findSpamDomainsNumberOfDays := findSpamDomains.Arg("days", "The number of days to look back").Default("3").Int()
+	findSpamDomainsQuiet := findSpamDomains.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
 
 	switch kingpin.MustParse(app.Parse(args)) {
 
-	// Display status
 	case status.FullCommand():
+		// Display status
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
@@ -55,8 +63,8 @@ func handleCommandlineArguments(args []string) {
 
 		os.Exit(0)
 
-	// Update filters
 	case update.FullCommand():
+		// Update filters
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
@@ -69,8 +77,8 @@ func handleCommandlineArguments(args []string) {
 
 		os.Exit(0)
 
-	// Remove spam control
 	case remove.FullCommand():
+		// Remove spam control
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
@@ -83,16 +91,44 @@ func handleCommandlineArguments(args []string) {
 
 		os.Exit(0)
 
-		// DetectSpam account
-	case detectSpam.FullCommand():
+	case updateSpamDomains.FullCommand():
+		// update spam domains
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
 
-		detectSpamError := cli.DetectSpam(*detectSpamAccountID, *detectSpamQuiet)
-		if detectSpamError != nil {
-			app.Fatalf("%s", detectSpamError.Error())
+		updateSpamDomainsError := cli.UpdateSpamDomains(*updateSpamDomainsQuiet)
+		if updateSpamDomainsError != nil {
+			app.Fatalf("%s", updateSpamDomainsError.Error())
+		}
+
+		os.Exit(0)
+
+	case listSpamDomains.FullCommand():
+		// list spam domains
+		cli, err := newCLI()
+		if err != nil {
+			app.Fatalf("%s", err.Error())
+		}
+
+		findSpamDomainsError := cli.ListSpamDomains()
+		if findSpamDomainsError != nil {
+			app.Fatalf("%s", findSpamDomainsError.Error())
+		}
+
+		os.Exit(0)
+
+	case findSpamDomains.FullCommand():
+		// find spam
+		cli, err := newCLI()
+		if err != nil {
+			app.Fatalf("%s", err.Error())
+		}
+
+		findSpamDomainsError := cli.DetectSpam(*findSpamDomainsAccountID, *findSpamDomainsNumberOfDays, *findSpamDomainsQuiet)
+		if findSpamDomainsError != nil {
+			app.Fatalf("%s", findSpamDomainsError.Error())
 		}
 
 		os.Exit(0)
@@ -111,7 +147,7 @@ func newCLI() (*cli, error) {
 		return nil, fmt.Errorf("Cannot determine the current users home direcotry. Error: %s", err)
 	}
 
-	tokenStoreFilePath := filepath.Join(homeDirPath, ".ga-spam-control")
+	tokenStoreFilePath := filepath.Join(homeDirPath, ".ga-spam-control", "credentials")
 	tokenStore := token.NewTokenStore(tokenStoreFilePath)
 
 	// create a new analytis API instance
@@ -122,8 +158,14 @@ func newCLI() (*cli, error) {
 		return nil, apiError
 	}
 
+	spamDetector := detector.New()
+	domainProviderFactory := spamcontrol.NewSpamDomainProviderFactory(analyticsAPI, spamDetector)
+
+	spamDomainRepositoryFilePath := filepath.Join(homeDirPath, ".ga-spam-control", "domains")
+	domainRepository := spamcontrol.NewSpamDomainRepository(spamDomainRepositoryFilePath, domainProviderFactory)
+
 	// create a spam control instance
-	spamControl := spamcontrol.New(analyticsAPI)
+	spamControl := spamcontrol.New(analyticsAPI, spamDetector, domainRepository)
 
 	return &cli{
 		spamControl: spamControl,
@@ -147,9 +189,51 @@ func (cli *cli) Remove(accountID string) error {
 	return cli.spamControl.Remove(accountID)
 }
 
+// UpdateSpamDomains updates the referrer spam domain lists.
+func (cli *cli) UpdateSpamDomains(quiet bool) error {
+	updateResult, err := cli.spamControl.UpdateSpamDomains()
+	if err != nil {
+		return err
+	}
+
+	// select the display template
+	templateText := templates.PrettyUpdate
+	if quiet {
+		// the "quiet" template contains no surplus texts
+		// and should be easier to parse by tools like awk
+		templateText = templates.QuietUpdate
+	}
+
+	updateResultTemplate, parseError := template.New("UpdateResult").Parse(templateText)
+	if parseError != nil {
+		return parseError
+	}
+
+	renderError := updateResultTemplate.Execute(os.Stdout, updateResult)
+	if renderError != nil {
+		return renderError
+	}
+
+	return nil
+}
+
+// ListSpamDomains prints a list of all known referrer spam domains.
+func (cli *cli) ListSpamDomains() error {
+	domains, err := cli.spamControl.ListSpamDomains()
+	if err != nil {
+		return err
+	}
+
+	for _, domain := range domains {
+		fmt.Println(domain)
+	}
+
+	return nil
+}
+
 // DetectSpam checks the given account for referrer-spam.
-func (cli *cli) DetectSpam(accountID string, quiet bool) error {
-	analysisResultViewModel, err := cli.spamControl.DetectSpam(accountID)
+func (cli *cli) DetectSpam(accountID string, numberOfDaysToLookBack int, quiet bool) error {
+	analysisResultViewModel, err := cli.spamControl.DetectSpam(accountID, numberOfDaysToLookBack)
 	if err != nil {
 		return err
 	}
@@ -162,7 +246,6 @@ func (cli *cli) DetectSpam(accountID string, quiet bool) error {
 		templateText = templates.QuietAnalysis
 	}
 
-	// parse the template
 	analysisTemplate, parseError := template.New("Analysis").Parse(templateText)
 	if parseError != nil {
 		return parseError
@@ -201,7 +284,6 @@ func (cli *cli) gobalStatus(quiet bool) error {
 		templateText = templates.QuietStatus
 	}
 
-	// parse the template
 	statusTemplate, parseError := template.New("Status").Parse(templateText)
 	if parseError != nil {
 		return parseError

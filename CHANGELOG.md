@@ -8,6 +8,29 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 -
 
+## v0.4.0
+
+### Added
+- Add logging for the update command
+- Add package documentation
+- Add documentation for public functions
+- Introduce a new list-spam-domains action
+
+### Changed
+- Combine static spam domains with dynamic ones
+- Combine multiple referrer spam domain sources
+- Display status as a percentage instead of a text-based status
+- Allow to specify the number of days for the find-spam action
+- Change the filter names prefix to "Referrer Spam Block Segment"
+
+### Removed
+- Remove the global status ... it didn't make much sense
+
+### Fixed
+- Fixed the update command. Updates did not work before.
+- Fix template newline handling
+- Fix the filesystem token store. Create the directory if it does not exist.
+
 ## v0.3.0
 
 ### Added
