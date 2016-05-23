@@ -6,6 +6,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+-
+
+## v0.4.0
+
+### Added
 - Add logging for the update command
 - Add package documentation
 - Add documentation for public functions
