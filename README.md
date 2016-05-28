@@ -147,11 +147,30 @@ make crosscompile
 ga-spam-control is licensed under the Apache License, Version 2.0.
 See [LICENSE](LICENSE) for the full license text.
 
+## Roadmap
+
+Some ideas for additional features:
+
+- Make remote spam domain providers configurable
+- Send more feature to the machine learning service to improve the results.
+For example: Lists of important phrases from the potential spammer's website.
+- Populate my own list of known referrer spam domains with the results from the `find-spam-domains` action.
+  - Automatic daily upload from the ga-spam-control clients
+  - Review of the additions by trusted community members or by a tool which checks the listed website
+- Add a feedback mechanism or whitelist to exclude false positives
+- Make the machine learning part available only to paying users. I cannot afford the costs for the Azure Machine Learning webservice all by myself.
+  - OR: Find a way to include the machine learning part into the client.
+- Create and update a "No Referrer Spam" segment and update it during the normal update process.
+Unfortunately I will need Google to add create and update support to the Google Analytics API for this to work (see: [analytics-issues - Issue 174: Create Advanced Segment and Customized Report Through API](https://code.google.com/p/analytics-issues/issues/detail?id=174)).
+
+Let me know if you have other ideas, or if want one of the features implemented next.
+
 ## Related Resources
 
 ### Referrer Spam
 
 - [What is referrer spam?](https://en.wikipedia.org/wiki/Referer_spam)
+- [Google Analytics Help Forum - Referral Spam Traffic](https://www.en.advertisercommunity.com/t5/Referral-Spam-Traffic/bd-p/Referral_Spam_Traffic)
 
 ### Lists of Referrer Spam Domains
 

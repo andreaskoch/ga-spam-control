@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
--
+- Add a roadmap to the README.md
 
 ## v0.4.0
 
