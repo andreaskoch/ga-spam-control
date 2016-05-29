@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Add a roadmap to the README.md
 
+### Fixed
+- The staticSpamDomains provider did not respect HTTP status codes.
+
 ## v0.4.0
 
 ### Added

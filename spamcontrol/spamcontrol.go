@@ -116,7 +116,7 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 func (spamControl *SpamControl) UpdateSpamDomains() (UpdateResult, error) {
 	unchanged, added, removed, err := spamControl.spamRepository.UpdateSpamDomains()
 	if err != nil {
-		return UpdateResult{}, nil
+		return UpdateResult{}, err
 	}
 
 	var domainUpdates []DomainUpdate

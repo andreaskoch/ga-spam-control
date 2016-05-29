@@ -28,6 +28,12 @@ func (provider *staticSpamDomains) GetSpamDomains() ([]string, error) {
 	response, requestError := http.Get(provider.domainListURL)
 	if requestError != nil {
 		return nil, fmt.Errorf("Failed to get URL %q: %s", provider.domainListURL, requestError.Error())
+
+	}
+
+	// check the HTTP status code
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Failed to get URL %q. Received HTTP status code %d.", provider.domainListURL, response.StatusCode)
 	}
 
 	// read the domain names line-by-line
