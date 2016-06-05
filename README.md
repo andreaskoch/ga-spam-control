@@ -149,19 +149,23 @@ See [LICENSE](LICENSE) for the full license text.
 
 ## Roadmap
 
-Some ideas for additional features:
+Ideally Google would just include a spam-protection into Google Analytics but until then here are some ideas for additional features and possible improvements:
 
 - Make remote spam domain providers configurable
-- Send more feature to the machine learning service to improve the results.
-For example: Lists of important phrases from the potential spammer's website.
+- Send more or other features to the machine learning service to improve the results. For example:
+  - Lists of important phrases from the potential spammer's website.
+  - Whois information of the spam domains
+  - ...
 - Populate my own list of known referrer spam domains with the results from the `find-spam-domains` action.
   - Automatic daily upload from the ga-spam-control clients
   - Review of the additions by trusted community members or by a tool which checks the listed website
 - Add a feedback mechanism or whitelist to exclude false positives
-- Make the machine learning part available only to paying users. I cannot afford the costs for the Azure Machine Learning webservice all by myself.
+- Make the machine learning part available only to paying users. I cannot afford the costs for the Azure Machine Learning web service all by myself.
   - OR: Find a way to include the machine learning part into the client.
+- Use my own machine learning service instead of Azure Machine Learning Studio to save costs for spam detection. Maybe embed the machine-learning model in the application.
 - Create and update a "No Referrer Spam" segment and update it during the normal update process.
 Unfortunately I will need Google to add create and update support to the Google Analytics API for this to work (see: [analytics-issues - Issue 174: Create Advanced Segment and Customized Report Through API](https://code.google.com/p/analytics-issues/issues/detail?id=174)).
+- Until Google supports segment creation via the API I ga-spam-control can at least print the necessary segment content to support manual editing of spam segments.
 
 Let me know if you have other ideas, or if want one of the features implemented next.
 

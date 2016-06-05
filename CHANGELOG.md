@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Add a roadmap to the README.md
+- Add "Support for manual segment creation" to the roadmap
 
 ### Fixed
 - The staticSpamDomains provider did not respect HTTP status codes.
