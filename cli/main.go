@@ -47,6 +47,10 @@ func handleCommandlineArguments(args []string) {
 	findSpamDomainsNumberOfDays := findSpamDomains.Arg("days", "The number of days to look back").Default("3").Int()
 	findSpamDomainsQuiet := findSpamDomains.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
 
+	getTrainingData := app.Command("get-training-data", "Get training data for the given account")
+	//getTrainingDataAccountID := getTrainingData.Arg("accountID", "Google Analytics account ID").Required().String()
+	//getTrainingDataNumberOfDays := getTrainingData.Arg("days", "The number of days to look back").Default("3").Int()
+
 	switch kingpin.MustParse(app.Parse(args)) {
 
 	case status.FullCommand():
@@ -129,6 +133,20 @@ func handleCommandlineArguments(args []string) {
 		findSpamDomainsError := cli.DetectSpam(*findSpamDomainsAccountID, *findSpamDomainsNumberOfDays, *findSpamDomainsQuiet)
 		if findSpamDomainsError != nil {
 			app.Fatalf("%s", findSpamDomainsError.Error())
+		}
+
+		os.Exit(0)
+
+	case getTrainingData.FullCommand():
+		// get training data
+		cli, err := newCLI()
+		if err != nil {
+			app.Fatalf("%s", err.Error())
+		}
+
+		getTrainingDataError := cli.GetTrainingData()
+		if getTrainingDataError != nil {
+			app.Fatalf("%s", getTrainingDataError.Error())
 		}
 
 		os.Exit(0)
@@ -254,6 +272,15 @@ func (cli *cli) DetectSpam(accountID string, numberOfDaysToLookBack int, quiet b
 	renderError := analysisTemplate.Execute(os.Stdout, analysisResultViewModel)
 	if renderError != nil {
 		return renderError
+	}
+
+	return nil
+}
+
+func (cli *cli) GetTrainingData() error {
+	_, err := cli.spamControl.GetTrainingData()
+	if err != nil {
+		return err
 	}
 
 	return nil

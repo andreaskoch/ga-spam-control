@@ -194,3 +194,5 @@ func (installationStatus InstallationStatus) String() string {
 	percentage := installationStatus.UpToDateFilters * 100.0 / installationStatus.TotalFilters
 	return fmt.Sprintf("%d%%", percentage)
 }
+
+type TrainingData struct{}

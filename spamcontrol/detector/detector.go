@@ -183,14 +183,45 @@ func rowsToInputRequest(rows []api.AnalyticsDataRow) inputRequest {
 
 	var values [][]string
 	for _, row := range rows {
+
+		isNewVisitor := "0"
+		if row.UserType == "New Visitor" {
+			isNewVisitor = "1"
+		}
+
+		fullReferrerIsSet := "1"
+		if row.FullReferrer == "(direct)" {
+			fullReferrerIsSet = "0"
+		}
+
+		mediumIsSet := "1"
+		if row.Medium == "(not set)" {
+			mediumIsSet = "0"
+		}
+
+		networkDomainIsSet := "1"
+		if row.NetworkDomain == "(not set)" {
+			networkDomainIsSet = "0"
+		}
+
+		networkLocationIsSet := "1"
+		if row.NetworkLocation == "(not set)" {
+			networkLocationIsSet = "0"
+		}
+
+		landingPagePathIsSet := "1"
+		if row.LandingPagePath == "/" {
+			landingPagePathIsSet = "0"
+		}
+
 		rowValues := []string{
-			row.UserType,
-			row.FullReferrer,
+			isNewVisitor,
+			fullReferrerIsSet,
 			row.Source,
-			row.Medium,
-			row.NetworkDomain,
-			row.NetworkLocation,
-			row.LandingPagePath,
+			mediumIsSet,
+			networkDomainIsSet,
+			networkLocationIsSet,
+			landingPagePathIsSet,
 			strconv.FormatInt(row.Sessions, 10),
 			strconv.FormatFloat(row.BounceRate, 'f', -1, 32),
 			strconv.FormatFloat(row.PageviewsPerSession, 'f', -1, 32),
@@ -204,13 +235,13 @@ func rowsToInputRequest(rows []api.AnalyticsDataRow) inputRequest {
 		Inputs: inputs{
 			ReferrerData: referrerData{
 				ColumnNames: []string{
-					"ga:userType",
-					"ga:fullReferrer",
+					"isNewVisitor",
+					"fullReferrerIsSet",
 					"ga:source",
-					"ga:medium",
-					"ga:networkDomain",
-					"ga:networkLocation",
-					"ga:landingPagePath",
+					"mediumIsSet",
+					"networkDomainIsSet",
+					"networkLocationIsSet",
+					"landingPagePathIsSet",
 					"ga:sessions",
 					"ga:bounceRate",
 					"ga:pageviewsPerSession",

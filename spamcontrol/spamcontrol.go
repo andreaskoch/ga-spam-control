@@ -20,6 +20,8 @@ type SpamController interface {
 	// of the analysis as a view model. Returns an error if the analysis failed.
 	DetectSpam(accountID string, numberOfDaysToLookBack int) (AnalysisResult, error)
 
+	GetTrainingData() (TrainingData, error)
+
 	// UpdateSpamDomains updates the referrer spam domain list.
 	UpdateSpamDomains() (UpdateResult, error)
 
@@ -177,6 +179,10 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 	}
 
 	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.75)
+}
+
+func (spamControl *SpamControl) GetTrainingData() (TrainingData, error) {
+	return TrainingData{}, nil
 }
 
 // GlobalStatus collects the current spam-control status of all accessible
