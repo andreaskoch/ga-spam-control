@@ -13,8 +13,9 @@ import (
 )
 
 // GoogleAnalyticsHostname contains the hostname of the Google Analytics API
-// const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
-const GoogleAnalyticsHostname = "www.googleapis.com"
+const GoogleAnalyticsHostname = "www-googleapis-com-yb0hxtzk6st4.runscope.net"
+
+// const GoogleAnalyticsHostname = "www.googleapis.com"
 
 // New creates a new Google Analytics api service instance with the given
 // client token provider and clientID and clientSecret.
