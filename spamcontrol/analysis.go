@@ -76,7 +76,7 @@ func (provider *MultiAccountAnalysis) GetSpamDomains() ([]string, error) {
 		spamDomains = append(spamDomains, domains...)
 	}
 
-	spamDomains = unique(spamDomains)
+	spamDomains = removeDuplicatesFromList(spamDomains)
 	sort.Strings(spamDomains)
 
 	return spamDomains, nil

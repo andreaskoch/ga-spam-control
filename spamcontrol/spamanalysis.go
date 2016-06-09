@@ -21,8 +21,13 @@ func (spamControl *dynamicSpamAnalysis) GetTrainingData(accountID string, number
 		return MachineLearningModel{}, analyticsDataError
 	}
 
-	trainingData := analyticsDataToMachineLearningModel(analyticsData)
-	return MachineLearningModel(trainingData), nil
+	// convert the analytics data to a machine learning model
+	machineLearningModel := analyticsDataToMachineLearningModel(analyticsData)
+
+	// remove duplicates
+	machineLearningModel.Rows = removeDuplicatesFromTable(machineLearningModel.Rows)
+
+	return MachineLearningModel(machineLearningModel), nil
 }
 
 // GetSpamAnalysis returns a dynamic referrer spam analysis report for the

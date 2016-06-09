@@ -90,7 +90,7 @@ func (repository *FilesystemSpamDomainRepository) getLatestSpamDomains() ([]stri
 		fullDomainList = append(fullDomainList, domains...)
 	}
 
-	fullDomainList = unique(fullDomainList)
+	fullDomainList = removeDuplicatesFromList(fullDomainList)
 
 	sort.Strings(fullDomainList)
 

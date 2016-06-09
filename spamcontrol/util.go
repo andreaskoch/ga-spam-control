@@ -2,18 +2,20 @@ package spamcontrol
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/andreaskoch/ga-spam-control/api"
 )
 
-// unique returns a copy of the given string array
+// removeDuplicatesFromList returns a copy of the given string array
 // cleaned from duplicate entries.
-func unique(list []string) []string {
+func removeDuplicatesFromList(list []string) []string {
 	var cleanedList []string
 
 	index := make(map[string]int)
 	for _, entry := range list {
 		if _, exists := index[entry]; exists {
+			index[entry] = index[entry] + 1
 			continue
 		}
 
@@ -23,6 +25,29 @@ func unique(list []string) []string {
 	}
 
 	return cleanedList
+}
+
+// removeDuplicatesFromTable returns a copy of the given table
+// with all duplicate rows removed.
+func removeDuplicatesFromTable(table [][]string) [][]string {
+	var cleanedTable [][]string
+
+	index := make(map[string]int)
+
+	for _, row := range table {
+		key := strings.Join(row, ",")
+
+		if _, exists := index[key]; exists {
+			index[key] = index[key] + 1
+			continue
+		}
+
+		index[key] = 1
+
+		cleanedTable = append(cleanedTable, row)
+	}
+
+	return cleanedTable
 }
 
 const trainingdataFalse = "0"
@@ -87,15 +112,15 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 		ColumnNames: []string{
 			"isNewVisitor",
 			"fullReferrerIsSet",
-			"ga:source",
+			"source",
 			"mediumIsSet",
 			"networkDomainIsSet",
 			"networkLocationIsSet",
 			"landingPagePathIsSet",
-			"ga:sessions",
-			"ga:bounceRate",
-			"ga:pageviewsPerSession",
-			"ga:timeOnPage",
+			"sessions",
+			"bounceRate",
+			"pageviewsPerSession",
+			"timeOnPage",
 		},
 		Rows: values,
 	}
