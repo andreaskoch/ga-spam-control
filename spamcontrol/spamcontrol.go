@@ -50,11 +50,13 @@ func New(analyticsAPI api.AnalyticsAPI, spamDetector SpamDetector, spamRepositor
 
 	accountProvider := remoteAccountProvider{analyticsAPI}
 
+	analyticsDataProvider := &remoteAnalyticsDataProvider{
+		analyticsAPI: analyticsAPI,
+	}
+
 	spamAnalysis := &dynamicSpamAnalysis{
-		analyticsDataProvider: &remoteAnalyticsDataProvider{
-			analyticsAPI: analyticsAPI,
-		},
-		spamDetector: spamDetector,
+		analyticsDataProvider: analyticsDataProvider,
+		spamDetector:          spamDetector,
 	}
 
 	filterNameProvider := &spamFilterNameProvider{"Referrer Spam Block"}
@@ -73,21 +75,28 @@ func New(analyticsAPI api.AnalyticsAPI, spamDetector SpamDetector, spamRepositor
 		filterFactory:      filterFactory,
 	}
 
+	trainingDataProvider := &MachineLearningModelTrainer{
+		analyticsDataProvider: analyticsDataProvider,
+		spamDomainRepository:  spamRepository,
+	}
+
 	return &SpamControl{
-		accountProvider: accountProvider,
-		filterProvider:  filterProvider,
-		spamAnalysis:    spamAnalysis,
-		spamRepository:  spamRepository,
+		accountProvider:      accountProvider,
+		filterProvider:       filterProvider,
+		spamAnalysis:         spamAnalysis,
+		spamRepository:       spamRepository,
+		trainingDataProvider: trainingDataProvider,
 	}
 }
 
 // The SpamControl type provides functions for
 // managing Google Analtics spam filters.
 type SpamControl struct {
-	accountProvider accountProvider
-	filterProvider  filterProvider
-	spamAnalysis    spamAnalysis
-	spamRepository  SpamDomainRepository
+	accountProvider      accountProvider
+	filterProvider       filterProvider
+	spamAnalysis         spamAnalysis
+	spamRepository       SpamDomainRepository
+	trainingDataProvider trainer
 }
 
 // Remove the referrer spam controls from the account with the given accountID.
@@ -185,7 +194,7 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 // GetTrainingData returns a set of training data for the given accountID.
 // Returns an error if the training data could not be fetched.
 func (spamControl *SpamControl) GetTrainingData(accountID string, numberOfDaysToLookBack int) (MachineLearningModel, error) {
-	return spamControl.spamAnalysis.GetTrainingData(accountID, numberOfDaysToLookBack)
+	return spamControl.trainingDataProvider.GetTrainingData(accountID, numberOfDaysToLookBack)
 }
 
 // GlobalStatus collects the current spam-control status of all accessible
