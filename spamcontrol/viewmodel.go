@@ -194,3 +194,12 @@ func (installationStatus InstallationStatus) String() string {
 	percentage := installationStatus.UpToDateFilters * 100.0 / installationStatus.TotalFilters
 	return fmt.Sprintf("%d%%", percentage)
 }
+
+// A Table defines the columnes and values of a classical table.
+type Table struct {
+	ColumnNames []string
+	Rows        [][]string
+}
+
+// MachineLearningModel contains all attributes for the machine-learning model.
+type MachineLearningModel Table

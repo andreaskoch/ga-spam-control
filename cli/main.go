@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/andreaskoch/ga-spam-control/api"
@@ -277,9 +278,15 @@ func (cli *cli) DetectSpam(accountID string, numberOfDaysToLookBack int, quiet b
 }
 
 func (cli *cli) GetTrainingData(accountID string, numberOfDaysToLookBack int) error {
-	_, err := cli.spamControl.GetTrainingData(accountID, numberOfDaysToLookBack)
+	trainingData, err := cli.spamControl.GetTrainingData(accountID, numberOfDaysToLookBack)
 	if err != nil {
 		return err
+	}
+
+	separator := ","
+	fmt.Fprintf(os.Stdout, "%s\n", strings.Join(trainingData.ColumnNames, separator))
+	for _, row := range trainingData.Rows {
+		fmt.Fprintf(os.Stdout, "%s\n", strings.Join(row, separator))
 	}
 
 	return nil
