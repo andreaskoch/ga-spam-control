@@ -1,7 +1,5 @@
 package spamcontrol
 
-import "github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
-
 type spamAnalysis interface {
 	// GetSpamAnalysis returns a spam analysis report for a given account ID.
 	// Returns an error if the report creation failed.
@@ -14,21 +12,17 @@ type spamAnalysis interface {
 // on analytics data.
 type dynamicSpamAnalysis struct {
 	analyticsDataProvider analyticsDataProvider
-	spamDetector          detector.SpamDetector
+	spamDetector          SpamDetector
 }
 
-func (spamControl *dynamicSpamAnalysis) GetTrainingData(accountID string, numberOfDays int) (Table, error) {
+func (spamControl *dynamicSpamAnalysis) GetTrainingData(accountID string, numberOfDays int) (TrainingData, error) {
 	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID, numberOfDays)
 	if analyticsDataError != nil {
-		return Table{}, analyticsDataError
+		return TrainingData{}, analyticsDataError
 	}
 
-	tableData, conversionError := rowsToTable(analyticsData)
-	if conversionError != nil {
-		return Table{}, conversionError
-	}
-
-	return tableData, nil
+	trainingData := analyticsDataToTrainingData(analyticsData)
+	return TrainingData(trainingData), nil
 }
 
 // GetSpamAnalysis returns a dynamic referrer spam analysis report for the

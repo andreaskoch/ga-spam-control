@@ -25,44 +25,54 @@ func unique(list []string) []string {
 	return cleanedList
 }
 
+// A Table defines the columnes and values of a classical table.
 type Table struct {
 	ColumnNames []string
 	Rows        [][]string
 }
 
-func rowsToTable(rows []api.AnalyticsDataRow) Table {
+// TrainingData contains all attributes for the machine-learning model.
+type TrainingData Table
+
+const trainingdataFalse = "0"
+const trainingdataTrue = "1"
+const trainingdataNotset = "(not set)"
+const trainingdataNewvisitor = "(New Visitor)"
+const trainingdataDirect = "(direct)"
+
+func analyticsDataToTrainingData(rows []api.AnalyticsDataRow) Table {
 
 	var values [][]string
 	for _, row := range rows {
 
-		isNewVisitor := "0"
-		if row.UserType == "New Visitor" {
-			isNewVisitor = "1"
+		isNewVisitor := trainingdataFalse
+		if row.UserType == trainingdataNewvisitor {
+			isNewVisitor = trainingdataTrue
 		}
 
-		fullReferrerIsSet := "1"
-		if row.FullReferrer == "(direct)" {
-			fullReferrerIsSet = "0"
+		fullReferrerIsSet := trainingdataTrue
+		if row.FullReferrer == trainingdataDirect {
+			fullReferrerIsSet = trainingdataFalse
 		}
 
-		mediumIsSet := "1"
-		if row.Medium == "(not set)" {
-			mediumIsSet = "0"
+		mediumIsSet := trainingdataTrue
+		if row.Medium == trainingdataNotset {
+			mediumIsSet = trainingdataFalse
 		}
 
-		networkDomainIsSet := "1"
-		if row.NetworkDomain == "(not set)" {
-			networkDomainIsSet = "0"
+		networkDomainIsSet := trainingdataTrue
+		if row.NetworkDomain == trainingdataNotset {
+			networkDomainIsSet = trainingdataFalse
 		}
 
-		networkLocationIsSet := "1"
-		if row.NetworkLocation == "(not set)" {
-			networkLocationIsSet = "0"
+		networkLocationIsSet := trainingdataTrue
+		if row.NetworkLocation == trainingdataNotset {
+			networkLocationIsSet = trainingdataFalse
 		}
 
-		landingPagePathIsSet := "1"
+		landingPagePathIsSet := trainingdataTrue
 		if row.LandingPagePath == "/" {
-			landingPagePathIsSet = "0"
+			landingPagePathIsSet = trainingdataFalse
 		}
 
 		rowValues := []string{

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/andreaskoch/ga-spam-control/api"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
@@ -20,6 +19,8 @@ type SpamController interface {
 	// of the analysis as a view model. Returns an error if the analysis failed.
 	DetectSpam(accountID string, numberOfDaysToLookBack int) (AnalysisResult, error)
 
+	// GetTrainingData returns a set of training data for the given accountID.
+	// Returns an error if the training data could not be fetched.
 	GetTrainingData(accountID string, numberOfDaysToLookBack int) (TrainingData, error)
 
 	// UpdateSpamDomains updates the referrer spam domain list.
@@ -45,7 +46,7 @@ type SpamController interface {
 }
 
 // New creates a new spam control instance.
-func New(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector, spamRepository SpamDomainRepository) *SpamControl {
+func New(analyticsAPI api.AnalyticsAPI, spamDetector SpamDetector, spamRepository SpamDomainRepository) *SpamControl {
 
 	accountProvider := remoteAccountProvider{analyticsAPI}
 
@@ -181,6 +182,8 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.75)
 }
 
+// GetTrainingData returns a set of training data for the given accountID.
+// Returns an error if the training data could not be fetched.
 func (spamControl *SpamControl) GetTrainingData(accountID string, numberOfDaysToLookBack int) (TrainingData, error) {
 	return spamControl.spamAnalysis.GetTrainingData(accountID, numberOfDaysToLookBack)
 }

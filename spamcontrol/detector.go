@@ -1,6 +1,4 @@
-// Package detector contains a spam detector implementation that uses
-// Azure Machine Learning web services to detect spam in analytics data.
-package detector
+package spamcontrol
 
 import (
 	"bytes"
@@ -11,18 +9,17 @@ import (
 	"strconv"
 
 	"github.com/andreaskoch/ga-spam-control/api"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol"
 )
 
 // The SpamDetector interface provides a functions detecting spam
 // in analytics data.
 type SpamDetector interface {
 	// GetSpamRating returns the rated spam score for the given analytics data.
-	GetSpamRating(analyticsData spamcontrol.Table) (RatedAnalyticsData, error)
+	GetSpamRating(analyticsData []api.AnalyticsDataRow) (RatedAnalyticsData, error)
 }
 
-// New create a new SpamDetector instance.
-func New() SpamDetector {
+// NewDetector create a new SpamDetector instance.
+func NewDetector() SpamDetector {
 	return azureMLSpamDetection{}
 }
 
@@ -31,12 +28,13 @@ type azureMLSpamDetection struct {
 }
 
 // GetSpamRating returns the rated spam score for the given analytics data.
-func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData spamcontrol.Table) (RatedAnalyticsData, error) {
+func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData []api.AnalyticsDataRow) (RatedAnalyticsData, error) {
 
 	inputSerializer := &inputRequestSerializer{}
 	outputSerializer := &spamScoreResponseSerializer{}
 
-	inputRequest := rowsToInputRequest(analyticsData)
+	transformedData := analyticsDataToTrainingData(analyticsData)
+	inputRequest := rowsToInputRequest(transformedData)
 
 	buffer := new(bytes.Buffer)
 	serializeError := inputSerializer.Serialize(buffer, &inputRequest)
@@ -180,7 +178,7 @@ func spamScoreResponseToRatedAnalyticsData(response spamScoreResponse) (RatedAna
 	return results, nil
 }
 
-func rowsToInputRequest(analyticsData spamcontrol.Table) inputRequest {
+func rowsToInputRequest(analyticsData Table) inputRequest {
 
 	request := inputRequest{
 		Inputs: inputs{

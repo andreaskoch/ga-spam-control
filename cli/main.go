@@ -11,7 +11,6 @@ import (
 	"github.com/andreaskoch/ga-spam-control/cli/templates"
 	"github.com/andreaskoch/ga-spam-control/cli/token"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/mitchellh/go-homedir"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -176,7 +175,7 @@ func newCLI() (*cli, error) {
 		return nil, apiError
 	}
 
-	spamDetector := detector.New()
+	spamDetector := spamcontrol.NewDetector()
 	domainProviderFactory := spamcontrol.NewSpamDomainProviderFactory(analyticsAPI, spamDetector)
 
 	spamDomainRepositoryFilePath := filepath.Join(homeDirPath, ".ga-spam-control", "domains")

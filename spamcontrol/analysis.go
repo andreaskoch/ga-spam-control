@@ -4,11 +4,10 @@ import (
 	"sort"
 
 	"github.com/andreaskoch/ga-spam-control/api"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 )
 
 // NewSpamDomainProviderFactory creates a new spam-domain provider factory instance.
-func NewSpamDomainProviderFactory(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector) *SpamDomainProviderFactory {
+func NewSpamDomainProviderFactory(analyticsAPI api.AnalyticsAPI, spamDetector SpamDetector) *SpamDomainProviderFactory {
 	spamAnalysis := &dynamicSpamAnalysis{
 		analyticsDataProvider: &remoteAnalyticsDataProvider{
 			analyticsAPI: analyticsAPI,
