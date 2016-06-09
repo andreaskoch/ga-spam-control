@@ -126,46 +126,16 @@ func spamScoreResponseToRatedAnalyticsData(response spamScoreResponse) (RatedAna
 
 	for _, spamScore := range response.Results.SpamScore.Value.Values {
 
-		sessions, err := strconv.ParseInt(spamScore[7], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[7], err.Error())
-		}
-
-		bounceRate, err := strconv.ParseFloat(spamScore[8], 64)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[8], err.Error())
-		}
-
-		pageViewsPerSession, err := strconv.ParseFloat(spamScore[9], 64)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[9], err.Error())
-		}
-
-		timeOnPage, err := strconv.ParseFloat(spamScore[10], 64)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[10], err.Error())
-		}
-
 		dataRow := api.AnalyticsDataRow{
-			UserType:            spamScore[0],
-			FullReferrer:        spamScore[1],
-			Source:              spamScore[2],
-			Medium:              spamScore[3],
-			NetworkDomain:       spamScore[4],
-			NetworkLocation:     spamScore[5],
-			LandingPagePath:     spamScore[6],
-			Sessions:            sessions,
-			BounceRate:          bounceRate,
-			PageviewsPerSession: pageViewsPerSession,
-			TimeOnPage:          timeOnPage,
+			Source: spamScore[0],
 		}
 
-		isSpam, err := strconv.ParseBool(spamScore[11])
+		isSpam, err := strconv.ParseBool(spamScore[1])
 		if err != nil {
 			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[11], err.Error())
 		}
 
-		propability, err := strconv.ParseFloat(spamScore[12], 64)
+		propability, err := strconv.ParseFloat(spamScore[2], 64)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[12], err.Error())
 		}
