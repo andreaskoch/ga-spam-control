@@ -94,7 +94,6 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 		rowValues := []string{
 			isNewVisitor,
 			fullReferrerIsSet,
-			row.Source,
 			mediumIsSet,
 			networkDomainIsSet,
 			networkLocationIsSet,
@@ -103,6 +102,7 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			strconv.FormatFloat(row.BounceRate, 'f', -1, 32),
 			strconv.FormatFloat(row.PageviewsPerSession, 'f', -1, 32),
 			strconv.FormatFloat(row.TimeOnPage, 'f', -1, 32),
+			row.Source,
 		}
 
 		values = append(values, rowValues)
@@ -112,7 +112,6 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 		ColumnNames: []string{
 			"isNewVisitor",
 			"fullReferrerIsSet",
-			"source",
 			"mediumIsSet",
 			"networkDomainIsSet",
 			"networkLocationIsSet",
@@ -121,6 +120,7 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			"bounceRate",
 			"pageviewsPerSession",
 			"timeOnPage",
+			"source",
 		},
 		Rows: values,
 	}
