@@ -1,14 +1,20 @@
 package spamcontrol
 
 type trainer interface {
+	// GetTrainingData returns a set of training data for the given accountID.
+	// Returns an error if the training data could not be fetched.
 	GetTrainingData(accountID string, numberOfDays int) (MachineLearningModel, error)
 }
 
+// MachineLearningModelTrainer returns pre-rated training data for
+// for training machine learning models.
 type MachineLearningModelTrainer struct {
 	analyticsDataProvider analyticsDataProvider
 	spamDomainRepository  SpamDomainRepository
 }
 
+// GetTrainingData returns a set of training data for the given accountID.
+// Returns an error if the training data could not be fetched.
 func (trainer *MachineLearningModelTrainer) GetTrainingData(accountID string, numberOfDays int) (MachineLearningModel, error) {
 	analyticsData, analyticsDataError := trainer.analyticsDataProvider.GetAnalyticsData(accountID, numberOfDays)
 	if analyticsDataError != nil {
