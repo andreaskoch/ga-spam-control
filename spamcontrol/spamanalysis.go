@@ -6,6 +6,8 @@ type spamAnalysis interface {
 	// GetSpamAnalysis returns a spam analysis report for a given account ID.
 	// Returns an error if the report creation failed.
 	GetSpamAnalysis(accountID string, numberOfDays int, threshold float64) (AnalysisResult, error)
+
+	GetTrainingData(accountID string, numberOfDays int) (TrainingData, error)
 }
 
 // dynamicSpamAnalysis performs dynamic referrer spam analysis
@@ -13,6 +15,20 @@ type spamAnalysis interface {
 type dynamicSpamAnalysis struct {
 	analyticsDataProvider analyticsDataProvider
 	spamDetector          detector.SpamDetector
+}
+
+func (spamControl *dynamicSpamAnalysis) GetTrainingData(accountID string, numberOfDays int) (Table, error) {
+	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID, numberOfDays)
+	if analyticsDataError != nil {
+		return Table{}, analyticsDataError
+	}
+
+	tableData, conversionError := rowsToTable(analyticsData)
+	if conversionError != nil {
+		return Table{}, conversionError
+	}
+
+	return tableData, nil
 }
 
 // GetSpamAnalysis returns a dynamic referrer spam analysis report for the

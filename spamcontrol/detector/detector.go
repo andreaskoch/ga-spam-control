@@ -11,13 +11,14 @@ import (
 	"strconv"
 
 	"github.com/andreaskoch/ga-spam-control/api"
+	"github.com/andreaskoch/ga-spam-control/spamcontrol"
 )
 
 // The SpamDetector interface provides a functions detecting spam
 // in analytics data.
 type SpamDetector interface {
 	// GetSpamRating returns the rated spam score for the given analytics data.
-	GetSpamRating(analyticsData api.AnalyticsData) (RatedAnalyticsData, error)
+	GetSpamRating(analyticsData spamcontrol.Table) (RatedAnalyticsData, error)
 }
 
 // New create a new SpamDetector instance.
@@ -30,7 +31,7 @@ type azureMLSpamDetection struct {
 }
 
 // GetSpamRating returns the rated spam score for the given analytics data.
-func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData api.AnalyticsData) (RatedAnalyticsData, error) {
+func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData spamcontrol.Table) (RatedAnalyticsData, error) {
 
 	inputSerializer := &inputRequestSerializer{}
 	outputSerializer := &spamScoreResponseSerializer{}
@@ -179,75 +180,13 @@ func spamScoreResponseToRatedAnalyticsData(response spamScoreResponse) (RatedAna
 	return results, nil
 }
 
-func rowsToInputRequest(rows []api.AnalyticsDataRow) inputRequest {
-
-	var values [][]string
-	for _, row := range rows {
-
-		isNewVisitor := "0"
-		if row.UserType == "New Visitor" {
-			isNewVisitor = "1"
-		}
-
-		fullReferrerIsSet := "1"
-		if row.FullReferrer == "(direct)" {
-			fullReferrerIsSet = "0"
-		}
-
-		mediumIsSet := "1"
-		if row.Medium == "(not set)" {
-			mediumIsSet = "0"
-		}
-
-		networkDomainIsSet := "1"
-		if row.NetworkDomain == "(not set)" {
-			networkDomainIsSet = "0"
-		}
-
-		networkLocationIsSet := "1"
-		if row.NetworkLocation == "(not set)" {
-			networkLocationIsSet = "0"
-		}
-
-		landingPagePathIsSet := "1"
-		if row.LandingPagePath == "/" {
-			landingPagePathIsSet = "0"
-		}
-
-		rowValues := []string{
-			isNewVisitor,
-			fullReferrerIsSet,
-			row.Source,
-			mediumIsSet,
-			networkDomainIsSet,
-			networkLocationIsSet,
-			landingPagePathIsSet,
-			strconv.FormatInt(row.Sessions, 10),
-			strconv.FormatFloat(row.BounceRate, 'f', -1, 32),
-			strconv.FormatFloat(row.PageviewsPerSession, 'f', -1, 32),
-			strconv.FormatFloat(row.TimeOnPage, 'f', -1, 32),
-		}
-
-		values = append(values, rowValues)
-	}
+func rowsToInputRequest(analyticsData spamcontrol.Table) inputRequest {
 
 	request := inputRequest{
 		Inputs: inputs{
 			ReferrerData: referrerData{
-				ColumnNames: []string{
-					"isNewVisitor",
-					"fullReferrerIsSet",
-					"ga:source",
-					"mediumIsSet",
-					"networkDomainIsSet",
-					"networkLocationIsSet",
-					"landingPagePathIsSet",
-					"ga:sessions",
-					"ga:bounceRate",
-					"ga:pageviewsPerSession",
-					"ga:timeOnPage",
-				},
-				Values: values,
+				ColumnNames: analyticsData.ColumnNames,
+				Values:      analyticsData.Rows,
 			},
 		},
 	}
