@@ -42,14 +42,14 @@ func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData []api.Anal
 		return nil, fmt.Errorf("The input request model could not be serialized: %s", serializeError.Error())
 	}
 
-	// uri := "https://europewest.services.azureml.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/9def2d38e1d6422c8115fcb04bec56c7/execute?api-version=2.0&details=true"
-	uri := "https://europewest-services-azureml-net-yb0hxtzk6st4.runscope.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/9def2d38e1d6422c8115fcb04bec56c7/execute?api-version=2.0&details=true"
+	// uri := "https://europewest.services.azureml.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/7b8554f367af497382f5fde320121321/execute?api-version=2.0&details=true"
+	uri := "https://europewest-services-azureml-net-yb0hxtzk6st4.runscope.net/workspaces/7cd19bff3eb34765a374b73e9820efba/services/7b8554f367af497382f5fde320121321/execute?api-version=2.0&details=true"
 	request, createRequestError := http.NewRequest(http.MethodPost, uri, buffer)
 	if createRequestError != nil {
 		return nil, fmt.Errorf("The PUT request could not be created: %s", createRequestError.Error())
 	}
 
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", "1UC1zBQmL63esM1NH6+udfmnmCJTvysNrIJ4HC1DwHFpSkJ2oKfO6bhRBErRjyuRaS6Kkq/FaGR4MENcdEtQgQ=="))
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", "x4DKP9sdRUpq1NkWQ0EgIBgtXjbBtxOxqgFYTSsznZO/XTqT4XHJNGMuwtzmEGHNThkh2CjYQ6gb/AkoHYzmuw=="))
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Accept", "application/json")
 
