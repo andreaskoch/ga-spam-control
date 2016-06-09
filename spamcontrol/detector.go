@@ -33,7 +33,7 @@ func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData []api.Anal
 	inputSerializer := &inputRequestSerializer{}
 	outputSerializer := &spamScoreResponseSerializer{}
 
-	transformedData := analyticsDataToTrainingData(analyticsData)
+	transformedData := analyticsDataToMachineLearningModel(analyticsData)
 	inputRequest := rowsToInputRequest(transformedData)
 
 	buffer := new(bytes.Buffer)

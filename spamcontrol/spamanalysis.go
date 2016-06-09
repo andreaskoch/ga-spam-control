@@ -5,7 +5,7 @@ type spamAnalysis interface {
 	// Returns an error if the report creation failed.
 	GetSpamAnalysis(accountID string, numberOfDays int, threshold float64) (AnalysisResult, error)
 
-	GetTrainingData(accountID string, numberOfDays int) (TrainingData, error)
+	GetTrainingData(accountID string, numberOfDays int) (MachineLearningModel, error)
 }
 
 // dynamicSpamAnalysis performs dynamic referrer spam analysis
@@ -15,14 +15,14 @@ type dynamicSpamAnalysis struct {
 	spamDetector          SpamDetector
 }
 
-func (spamControl *dynamicSpamAnalysis) GetTrainingData(accountID string, numberOfDays int) (TrainingData, error) {
+func (spamControl *dynamicSpamAnalysis) GetTrainingData(accountID string, numberOfDays int) (MachineLearningModel, error) {
 	analyticsData, analyticsDataError := spamControl.analyticsDataProvider.GetAnalyticsData(accountID, numberOfDays)
 	if analyticsDataError != nil {
-		return TrainingData{}, analyticsDataError
+		return MachineLearningModel{}, analyticsDataError
 	}
 
-	trainingData := analyticsDataToTrainingData(analyticsData)
-	return TrainingData(trainingData), nil
+	trainingData := analyticsDataToMachineLearningModel(analyticsData)
+	return MachineLearningModel(trainingData), nil
 }
 
 // GetSpamAnalysis returns a dynamic referrer spam analysis report for the

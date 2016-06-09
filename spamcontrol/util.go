@@ -31,8 +31,8 @@ type Table struct {
 	Rows        [][]string
 }
 
-// TrainingData contains all attributes for the machine-learning model.
-type TrainingData Table
+// MachineLearningModel contains all attributes for the machine-learning model.
+type MachineLearningModel Table
 
 const trainingdataFalse = "0"
 const trainingdataTrue = "1"
@@ -40,7 +40,7 @@ const trainingdataNotset = "(not set)"
 const trainingdataNewvisitor = "(New Visitor)"
 const trainingdataDirect = "(direct)"
 
-func analyticsDataToTrainingData(rows []api.AnalyticsDataRow) Table {
+func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 
 	var values [][]string
 	for _, row := range rows {

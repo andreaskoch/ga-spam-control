@@ -21,7 +21,7 @@ type SpamController interface {
 
 	// GetTrainingData returns a set of training data for the given accountID.
 	// Returns an error if the training data could not be fetched.
-	GetTrainingData(accountID string, numberOfDaysToLookBack int) (TrainingData, error)
+	GetTrainingData(accountID string, numberOfDaysToLookBack int) (MachineLearningModel, error)
 
 	// UpdateSpamDomains updates the referrer spam domain list.
 	UpdateSpamDomains() (UpdateResult, error)
@@ -184,7 +184,7 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 
 // GetTrainingData returns a set of training data for the given accountID.
 // Returns an error if the training data could not be fetched.
-func (spamControl *SpamControl) GetTrainingData(accountID string, numberOfDaysToLookBack int) (TrainingData, error) {
+func (spamControl *SpamControl) GetTrainingData(accountID string, numberOfDaysToLookBack int) (MachineLearningModel, error) {
 	return spamControl.spamAnalysis.GetTrainingData(accountID, numberOfDaysToLookBack)
 }
 
