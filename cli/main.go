@@ -48,7 +48,7 @@ func handleCommandlineArguments(args []string) {
 	findSpamDomainsQuiet := findSpamDomains.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
 
 	getTrainingData := app.Command("get-training-data", "Get training data for the given account")
-	getTrainingDataAccountID := getTrainingData.Arg("accountID", "Google Analytics account ID").Required().String()
+	getTrainingDataAccountIDs := getTrainingData.Arg("accountID(s)", "Google Analytics account ID(s)").Required().String()
 	getTrainingDataNumberOfDays := getTrainingData.Arg("days", "The number of days to look back").Default("3").Int()
 
 	switch kingpin.MustParse(app.Parse(args)) {
@@ -144,7 +144,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", err.Error())
 		}
 
-		getTrainingDataError := cli.GetTrainingData(*getTrainingDataAccountID, *getTrainingDataNumberOfDays)
+		getTrainingDataError := cli.GetTrainingData(*getTrainingDataAccountIDs, *getTrainingDataNumberOfDays)
 		if getTrainingDataError != nil {
 			app.Fatalf("%s", getTrainingDataError.Error())
 		}
@@ -277,8 +277,11 @@ func (cli *cli) DetectSpam(accountID string, numberOfDaysToLookBack int, quiet b
 	return nil
 }
 
-func (cli *cli) GetTrainingData(accountID string, numberOfDaysToLookBack int) error {
-	trainingData, err := cli.spamControl.GetTrainingData(accountID, numberOfDaysToLookBack)
+func (cli *cli) GetTrainingData(accountIDs string, numberOfDaysToLookBack int) error {
+
+	ids := strings.Split(accountIDs, ",")
+
+	trainingData, err := cli.spamControl.GetTrainingData(ids, numberOfDaysToLookBack)
 	if err != nil {
 		return err
 	}

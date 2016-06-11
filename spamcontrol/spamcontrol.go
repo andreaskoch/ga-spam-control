@@ -19,9 +19,9 @@ type SpamController interface {
 	// of the analysis as a view model. Returns an error if the analysis failed.
 	DetectSpam(accountID string, numberOfDaysToLookBack int) (AnalysisResult, error)
 
-	// GetTrainingData returns a set of training data for the given accountID.
+	// GetTrainingData returns a set of training data for the given account ID(s).
 	// Returns an error if the training data could not be fetched.
-	GetTrainingData(accountID string, numberOfDaysToLookBack int) (MachineLearningModel, error)
+	GetTrainingData(accountIDs []string, numberOfDaysToLookBack int) (MachineLearningModel, error)
 
 	// UpdateSpamDomains updates the referrer spam domain list.
 	UpdateSpamDomains() (UpdateResult, error)
@@ -191,10 +191,10 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.75)
 }
 
-// GetTrainingData returns a set of training data for the given accountID.
+// GetTrainingData returns a set of training data for the given account ID(s).
 // Returns an error if the training data could not be fetched.
-func (spamControl *SpamControl) GetTrainingData(accountID string, numberOfDaysToLookBack int) (MachineLearningModel, error) {
-	return spamControl.trainingDataProvider.GetTrainingData(accountID, numberOfDaysToLookBack)
+func (spamControl *SpamControl) GetTrainingData(accountIDs []string, numberOfDaysToLookBack int) (MachineLearningModel, error) {
+	return spamControl.trainingDataProvider.GetTrainingData(accountIDs, numberOfDaysToLookBack)
 }
 
 // GlobalStatus collects the current spam-control status of all accessible
