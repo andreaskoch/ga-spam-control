@@ -55,6 +55,7 @@ const trainingdataTrue = "1"
 const trainingdataNotset = "(not set)"
 const trainingdataNewvisitor = "(New Visitor)"
 const trainingdataDirect = "(direct)"
+const trainingdataReferral = "referral"
 
 func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 
@@ -71,9 +72,9 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			fullReferrerIsSet = trainingdataFalse
 		}
 
-		mediumIsSet := trainingdataTrue
-		if row.Medium == trainingdataNotset {
-			mediumIsSet = trainingdataFalse
+		isReferral := trainingdataFalse
+		if row.Medium == trainingdataReferral {
+			isReferral = trainingdataTrue
 		}
 
 		networkDomainIsSet := trainingdataTrue
@@ -94,7 +95,7 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 		rowValues := []string{
 			isNewVisitor,
 			fullReferrerIsSet,
-			mediumIsSet,
+			isReferral,
 			networkDomainIsSet,
 			networkLocationIsSet,
 			landingPagePathIsSet,
@@ -112,7 +113,7 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 		ColumnNames: []string{
 			"isNewVisitor",
 			"fullReferrerIsSet",
-			"mediumIsSet",
+			"isReferral",
 			"networkDomainIsSet",
 			"networkLocationIsSet",
 			"landingPagePathIsSet",
