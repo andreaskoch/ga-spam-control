@@ -49,7 +49,7 @@ func handleCommandlineArguments(args []string) {
 
 	getTrainingData := app.Command("get-training-data", "Get training data for the given account")
 	getTrainingDataAccountIDs := getTrainingData.Arg("accountID(s)", "Google Analytics account ID(s)").Required().String()
-	getTrainingDataNumberOfDays := getTrainingData.Arg("days", "The number of days to look back").Default("3").Int()
+	getTrainingDataNumberOfDays := getTrainingData.Arg("days", "The number of days to look back").Default("360").Int()
 
 	switch kingpin.MustParse(app.Parse(args)) {
 
