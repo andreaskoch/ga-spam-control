@@ -77,16 +77,6 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			isReferral = trainingdataTrue
 		}
 
-		networkDomainIsSet := trainingdataTrue
-		if row.NetworkDomain == trainingdataNotset {
-			networkDomainIsSet = trainingdataFalse
-		}
-
-		networkLocationIsSet := trainingdataTrue
-		if row.NetworkLocation == trainingdataNotset {
-			networkLocationIsSet = trainingdataFalse
-		}
-
 		landingPagePathIsSet := trainingdataTrue
 		if row.LandingPagePath == "/" {
 			landingPagePathIsSet = trainingdataFalse
@@ -96,8 +86,6 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			isNewVisitor,
 			fullReferrerIsSet,
 			isReferral,
-			networkDomainIsSet,
-			networkLocationIsSet,
 			landingPagePathIsSet,
 			strconv.FormatInt(row.Sessions, 10),
 			strconv.FormatFloat(row.BounceRate, 'f', -1, 32),
@@ -114,8 +102,6 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			"isNewVisitor",
 			"fullReferrerIsSet",
 			"isReferral",
-			"networkDomainIsSet",
-			"networkLocationIsSet",
 			"landingPagePathIsSet",
 			"sessions",
 			"bounceRate",
