@@ -188,7 +188,7 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 		return AnalysisResult{}, fmt.Errorf("The specified number of days to look back cannot be below 1")
 	}
 
-	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.75)
+	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.80)
 }
 
 // GetTrainingData returns a set of training data for the given account ID(s).

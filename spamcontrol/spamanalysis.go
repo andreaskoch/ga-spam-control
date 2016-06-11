@@ -1,5 +1,7 @@
 package spamcontrol
 
+import "fmt"
+
 type spamAnalysis interface {
 	// GetSpamAnalysis returns a spam analysis report for a given account ID.
 	// Returns an error if the report creation failed.
@@ -40,6 +42,8 @@ func (spamControl *dynamicSpamAnalysis) GetSpamAnalysis(accountID string, number
 			SpamProbability: row.Probability,
 		})
 	}
+
+	fmt.Println(spamDomainMap)
 
 	var spamDomains []SpamDomain
 	for domainName, domains := range spamDomainMap {

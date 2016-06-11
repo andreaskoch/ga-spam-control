@@ -63,7 +63,7 @@ func (spamDetection azureMLSpamDetection) GetSpamRating(analyticsData []api.Anal
 		return nil, deserializeError
 	}
 
-	ratedAnalyticsData, err := spamScoreResponseToRatedAnalyticsData(*spamScoreResponse)
+	ratedAnalyticsData, err := spamScoreResponseToRatedAnalyticsData(analyticsData, *spamScoreResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -120,24 +120,31 @@ type RatedAnalyticsDataRow struct {
 // RatedAnalyticsData contains a set of rated analytics data rows
 type RatedAnalyticsData []RatedAnalyticsDataRow
 
-func spamScoreResponseToRatedAnalyticsData(response spamScoreResponse) (RatedAnalyticsData, error) {
+func spamScoreResponseToRatedAnalyticsData(requestValues []api.AnalyticsDataRow, response spamScoreResponse) (RatedAnalyticsData, error) {
+
+	responseValues := response.Results.SpamScore.Value.Values
+	// if len(responseValues) != len(requestValues) {
+	// return RatedAnalyticsData{}, fmt.Errorf("Response size does not match request size.")
+	// }
 
 	results := make(RatedAnalyticsData, 0)
 
-	for _, spamScore := range response.Results.SpamScore.Value.Values {
+	for index, spamScore := range responseValues {
 
+		// look up the source/domain from the request data
+		requestData := requestValues[index]
 		dataRow := api.AnalyticsDataRow{
-			Source: spamScore[0],
+			Source: requestData.Source,
 		}
 
-		isSpam, err := strconv.ParseBool(spamScore[1])
+		isSpam, err := strconv.ParseBool(spamScore[0])
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[11], err.Error())
+			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[0], err.Error())
 		}
 
-		propability, err := strconv.ParseFloat(spamScore[2], 64)
+		propability, err := strconv.ParseFloat(spamScore[1], 64)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[12], err.Error())
+			return nil, fmt.Errorf("Unable to parse %q: %s", spamScore[1], err.Error())
 		}
 
 		row := RatedAnalyticsDataRow{dataRow, isSpam, propability}

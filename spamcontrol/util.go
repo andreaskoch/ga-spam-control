@@ -100,7 +100,6 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 			"bounceRate",
 			"pageviewsPerSession",
 			"timeOnPage",
-			"source",
 			"numberOfDuplicates",
 		},
 		Rows: groupedValues,
@@ -147,7 +146,6 @@ func normalizeAnalyticsData(rows []api.AnalyticsDataRow) [][]string {
 			strconv.FormatFloat(row.BounceRate, 'f', -1, 32),
 			strconv.FormatFloat(row.PageviewsPerSession, 'f', -1, 32),
 			strconv.FormatFloat(row.TimeOnPage, 'f', -1, 32),
-			row.Source,
 		}
 
 		values = append(values, rowValues)
