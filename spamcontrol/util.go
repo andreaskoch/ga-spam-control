@@ -1,6 +1,7 @@
 package spamcontrol
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -50,6 +51,62 @@ func removeDuplicatesFromTable(table [][]string) [][]string {
 	return cleanedTable
 }
 
+func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
+
+	// normalize the analytics data
+	values := normalizeAnalyticsData(rows)
+
+	// determine usage
+	usageIndex := make(map[string]int)
+	for _, row := range values {
+		key := strings.Join(row, ",")
+
+		if _, exists := usageIndex[key]; exists {
+			usageIndex[key] = usageIndex[key] + 1
+			continue
+		}
+
+		usageIndex[key] = 1
+	}
+
+	// group
+	alreadySeen := make(map[string]bool)
+	var groupedValues [][]string
+	for _, row := range values {
+		key := strings.Join(row, ",")
+
+		// handle every key only once
+		if _, exists := alreadySeen[key]; exists {
+			continue
+		}
+
+		// append the number of duplicates to the row
+		numberOfDuplicates := usageIndex[key]
+		row = append(row, fmt.Sprintf("%v", numberOfDuplicates))
+
+		groupedValues = append(groupedValues, row)
+
+		// make sure we don't add this value again
+		alreadySeen[key] = true
+	}
+
+	return Table{
+		ColumnNames: []string{
+			"isNewVisitor",
+			"fullReferrerIsSet",
+			"isReferral",
+			"landingPagePathIsSet",
+			"sessions",
+			"bounceRate",
+			"pageviewsPerSession",
+			"timeOnPage",
+			"source",
+			"numberOfDuplicates",
+		},
+		Rows: groupedValues,
+	}
+}
+
 const trainingdataFalse = "0"
 const trainingdataTrue = "1"
 const trainingdataNotset = "(not set)"
@@ -57,8 +114,7 @@ const trainingdataNewvisitor = "(New Visitor)"
 const trainingdataDirect = "(direct)"
 const trainingdataReferral = "referral"
 
-func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
-
+func normalizeAnalyticsData(rows []api.AnalyticsDataRow) [][]string {
 	var values [][]string
 	for _, row := range rows {
 
@@ -97,20 +153,5 @@ func analyticsDataToMachineLearningModel(rows []api.AnalyticsDataRow) Table {
 		values = append(values, rowValues)
 	}
 
-	request := Table{
-		ColumnNames: []string{
-			"isNewVisitor",
-			"fullReferrerIsSet",
-			"isReferral",
-			"landingPagePathIsSet",
-			"sessions",
-			"bounceRate",
-			"pageviewsPerSession",
-			"timeOnPage",
-			"source",
-		},
-		Rows: values,
-	}
-
-	return request
+	return values
 }

@@ -24,9 +24,6 @@ func (trainer *MachineLearningModelTrainer) GetTrainingData(accountID string, nu
 	// convert the analytics data to a machine learning model
 	machineLearningModel := analyticsDataToMachineLearningModel(analyticsData)
 
-	// remove duplicates
-	machineLearningModel.Rows = removeDuplicatesFromTable(machineLearningModel.Rows)
-
 	// add spam rating
 	spamDomainNames, spamDomainsError := trainer.spamDomainRepository.GetSpamDomains()
 	if spamDomainsError != nil {
