@@ -50,7 +50,7 @@ func (trainer *MachineLearningModelTrainer) GetTrainingData(accountIDs []string,
 		for _, spamDomainName := range spamDomainNames {
 
 			// check if the domain name matches a known referrer spam domain
-			domainName := row[len(row)-1]
+			domainName := row[len(row)-2]
 			if domainName == spamDomainName {
 				isSpam = trainingdataTrue
 				break
