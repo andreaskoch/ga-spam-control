@@ -32,7 +32,7 @@ type filterProvider interface {
 type remoteFilterProvider struct {
 	analyticsAPI api.AnalyticsAPI
 
-	spamRepository SpamDomainRepository
+	spamDomainProvider SpamDomainProvider
 
 	filterNameProvider filterNameProvider
 	filterFactory      filterFactory
@@ -96,9 +96,9 @@ func (filterProvider remoteFilterProvider) GetFilterStatuses(accountID string) (
 	}
 
 	// get the latest referrer spam domain names
-	domainNames, spamRepositoryError := filterProvider.spamRepository.GetSpamDomains()
-	if spamRepositoryError != nil {
-		return nil, spamRepositoryError
+	domainNames, spamDomainProviderError := filterProvider.spamDomainProvider.GetSpamDomains()
+	if spamDomainProviderError != nil {
+		return nil, spamDomainProviderError
 	}
 
 	// get the latest filters

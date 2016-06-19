@@ -1,6 +1,6 @@
 # Google Analytics Spam Control
 
-Command-line utility for blocking referrer spam from your Google Analytics accounts automatically using the power of community-maintained lists and machine learning.
+Command-line utility for automating the fight against Google Analytics referral spam
 
 Google Analytics [referrer spam](https://en.wikipedia.org/wiki/Referer_spam) is pain.
 There are hundreds of known referrer spam domains and every other day a new one pops up. And the only way to keep the spammers from skewing your web analytics reports is to block these spam domain names one by one.
@@ -17,15 +17,7 @@ To always protect your analytics reports from annoying false entries ga-spam-con
 - [Stevie Rays'  apache-nginx-referral-spam-blacklist](https://github.com/Stevie-Ray/apache-nginx-referral-spam-blacklist)
 - [Piwik Referrer spam blacklist](https://github.com/piwik/referrer-spam-blacklist)
 
-with the **power of machine learning**. ga-spam-control analyzes your analytics data and identifies spam which went past the existing filters.
-
-**Screenshot of the Azure Machine Learning Web Service that ga-spam-control uses**
-
-![Screenshot of the Azure Machine Learning Model Training Experiment](files/azure-ml-spam-detection/screenshots/Azure-Machine-Learning-Spam-Detection-Screenshot-00003.png)
-
 This gives you the ability to completely automate your spam protection process. Just let ga-spam-control check your Google Analytics accounts daily for new spam. And when it detects new spam; update your filters.
-
-This gives you an additional level of protection; just in case the community spam lists are not updated fast enough.
 
 ## Available Commands
 
@@ -39,7 +31,7 @@ In order to protect your Google Analytics account from spam **ga-spam-control** 
 Display the spam-control status of all your accounts or for a specific account
 2. Action: **update-filters**
 Create or update the spam-control filters for a specific account
-3. Action: **remove-fiters**
+3. Action: **remove-filters**
 Remove all spam-control filters from an account
 
 **Referrer Spam Domains Actions**
@@ -50,10 +42,10 @@ The basis for the spam filters is an up-to-date list of known referrer spam doma
 Print a list of all currently known referrer spam domains
 2. Action: **update-spam-domains**
 Update the list of referrer spam domain names.
-4. Action: **find-spam-domains**
-Use a machine learning service to analyze the last `n` days of analytics data for new referrer spam.
+3. Action: **find-spam-domains**
+Manually review the last `n` days of analytics data and mark domain names as spam
 
-The current list of referrer spam domains is stored at this path: `~/.ga-spam-control/domains`
+Which domains are currently considered spam is stored in the `~/.ga-spam-control/spam-domains/community.txt` and `~/.ga-spam-control/spam-domains/personal.txt`.
 
 ## Usage
 
@@ -81,12 +73,6 @@ Display the spam-control status in a parseable format:
 ga-spam-control show-status --quiet
 ```
 
-Print account IDs of accounts that have the spam-control status of "not-installed"
-
-```bash
-ga-spam-control show-status -q | grep "not-installed" | awk '{print $1}'
-```
-
 Display the current spam-control **status** for a specific Google Analytics account:
 
 ```bash
@@ -109,18 +95,20 @@ ga-spam-control update-filters <accountID>
 ga-spam-control remove-filters <accountID>
 ```
 
-### Find new referrer spam with machine learning
+### Find new referrer spam in your accounts
 
-The **find-spam-domains** action analyzes the last `n ` days of analytics data from the given account for new referrer spam:
+The **find-spam-domains** displays referrer domain names from the last `n ` days of analytics data to you for review.
 
 ```bash
-ga-spam-control find-spam-domains <accountID>
+ga-spam-control find-spam-domains <accountID> <numberOfDaysToLookBack>
 ```
+
+By default ga-spam-control will use the last 90 days of analytics data. But if you want to review less or more days you can specify the number of days yourself.
 
 **Authentication**
 
 The first time you perform an action, you will be displayed an oAuth authorization dialog.
-If you permit the requested rights the authentication token will be stored in your home directory (`~/.ga-spam-control/credentials`).
+If you permit the requested rights the authentication token will be stored in your home directory (`~/.ga-spam-control/credentials.json`).
 
 To sign out you can either delete the file or de-authorize the "Google Analytics Spam Control" app in your Google App Permissions at https://security.google.com/settings/security/permissions.
 
@@ -147,11 +135,31 @@ make crosscompile
 ga-spam-control is licensed under the Apache License, Version 2.0.
 See [LICENSE](LICENSE) for the full license text.
 
+## Roadmap
+
+Ideally Google would just include a spam-protection into Google Analytics but until then here are some ideas for additional features and possible improvements:
+
+- Make remote spam domain providers configurable
+- Populate my own list of known referrer spam domains with the results from the `find-spam-domains` action.
+  - Automatic daily upload from the ga-spam-control clients
+  - Review of the additions by trusted community members or by a tool which checks the listed website
+- Create and update a "No Referrer Spam" segment and update it during the normal update process.
+Unfortunately I will need Google to add create and update support to the Google Analytics API for this to work (see: [analytics-issues - Issue 174: Create Advanced Segment and Customized Report Through API](https://code.google.com/p/analytics-issues/issues/detail?id=174)).
+- Until Google supports segment creation via the API I ga-spam-control can at least print the necessary segment content to support manual editing of spam segments.
+- Use machine learning to automatically identify new referrer spam.
+Earlier versions of ga-spam-control already used a machine learning model. But unfortunately I could only train the model to detect new referrer spam for a single website - the model did not work well enough when I applied it to websites with different usage patterns.
+- Other options for detecting referrer spam automatically
+  - Correlate analytics data with web server logs to identify referrer spam
+  - Do a word analysis of the referrer site and use regular e-mail techniques to identify spam sites
+
+Let me know if you have other ideas, or if want one of the features implemented next.
+
 ## Related Resources
 
 ### Referrer Spam
 
 - [What is referrer spam?](https://en.wikipedia.org/wiki/Referer_spam)
+- [Google Analytics Help Forum - Referral Spam Traffic](https://www.en.advertisercommunity.com/t5/Referral-Spam-Traffic/bd-p/Referral_Spam_Traffic)
 
 ### Lists of Referrer Spam Domains
 

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
+	"github.com/andreaskoch/ga-spam-control/common/fsutil"
 
 	"golang.org/x/oauth2"
 )
@@ -49,13 +49,13 @@ func (store filesystemTokenStore) GetToken() (*oauth2.Token, error) {
 // error if the save failed.
 func (store filesystemTokenStore) SaveToken(token *oauth2.Token) error {
 	folder := filepath.Dir(store.filePath)
-	if !pathExists(folder) {
+	if !fsutil.PathExists(folder) {
 		if err := os.MkdirAll(folder, 0700); err != nil {
 			return err
 		}
 	}
 
-	if !isDirectory(folder) {
+	if !fsutil.IsDirectory(folder) {
 		return fmt.Errorf("Cannot create folder %q. A file with the same name already exists.", folder)
 	}
 
@@ -70,32 +70,4 @@ func (store filesystemTokenStore) SaveToken(token *oauth2.Token) error {
 	}
 
 	return nil
-}
-
-// pathExists checks if the given path exists.
-// Returns true if the file or directory with the given paths exists;
-// ohterwise false.
-func pathExists(path string) bool {
-	if strings.TrimSpace(path) == "" {
-		return false
-	}
-
-	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
-		return false
-	}
-
-	return true
-}
-
-// isDirectory checks if the given path is a directory.
-// Returns true if the given path exists and is a directory;
-// otherwise false.
-func isDirectory(path string) bool {
-
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return fileInfo.IsDir()
 }
