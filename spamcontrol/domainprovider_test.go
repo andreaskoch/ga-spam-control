@@ -14,7 +14,7 @@ func Test_GetSpamDomains_200OK_ResponseContainsOneLine_SingleDomainIsReturned(t 
 	}))
 	defer testServer.Close()
 
-	domainProvider := staticSpamDomains{testServer.URL}
+	domainProvider := remoteSpamDomains{testServer.URL}
 
 	// act
 	domains, err := domainProvider.GetSpamDomains()
@@ -39,7 +39,7 @@ func Test_GetSpamDomains_200OK_ResponseContainsTwoLines_TwoDomainsAreReturned(t 
 	}))
 	defer testServer.Close()
 
-	domainProvider := staticSpamDomains{testServer.URL}
+	domainProvider := remoteSpamDomains{testServer.URL}
 
 	// act
 	domains, err := domainProvider.GetSpamDomains()
@@ -76,7 +76,7 @@ func Test_GetSpamDomains_200OK_ResponseContainsDiverseText_DomainNamesAreNotModi
 		}))
 		defer testServer.Close()
 
-		domainProvider := staticSpamDomains{testServer.URL}
+		domainProvider := remoteSpamDomains{testServer.URL}
 
 		// act
 		domains, err := domainProvider.GetSpamDomains()
@@ -103,7 +103,7 @@ func Test_GetSpamDomains_200OK_ResponseContainsDomainsWithWhitespace_Domainnames
 	}))
 	defer testServer.Close()
 
-	domainProvider := staticSpamDomains{testServer.URL}
+	domainProvider := remoteSpamDomains{testServer.URL}
 
 	// act
 	domains, err := domainProvider.GetSpamDomains()
@@ -129,7 +129,7 @@ func Test_GetSpamDomains_200OK_ResponseContainsEmptyLines_EmptyLinesAreOmitted(t
 	}))
 	defer testServer.Close()
 
-	domainProvider := staticSpamDomains{testServer.URL}
+	domainProvider := remoteSpamDomains{testServer.URL}
 
 	// act
 	domains, err := domainProvider.GetSpamDomains()
@@ -155,7 +155,7 @@ func Test_GetSpamDomains_404Error_ResponseContains404ErrorPage_ErrorIsReturned(t
 	}))
 	defer testServer.Close()
 
-	domainProvider := staticSpamDomains{testServer.URL}
+	domainProvider := remoteSpamDomains{testServer.URL}
 
 	// act
 	domains, err := domainProvider.GetSpamDomains()
@@ -181,7 +181,7 @@ func Test_GetSpamDomains_500Error_ResponseContainsErrorPage_ErrorIsReturned(t *t
 	}))
 	defer testServer.Close()
 
-	domainProvider := staticSpamDomains{testServer.URL}
+	domainProvider := remoteSpamDomains{testServer.URL}
 
 	// act
 	domains, err := domainProvider.GetSpamDomains()

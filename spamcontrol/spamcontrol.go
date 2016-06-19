@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/andreaskoch/ga-spam-control/api"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
@@ -43,15 +42,15 @@ type SpamController interface {
 }
 
 // New creates a new spam control instance.
-func New(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector, spamRepository SpamDomainRepository) *SpamControl {
+func New(analyticsAPI api.AnalyticsAPI, spamDomainProvider SpamDomainProvider, communitySpamRepository *CommunitySpamDomainRepository, privateSpamRepository *PrivateSpamDomainRepository) *SpamControl {
 
 	accountProvider := remoteAccountProvider{analyticsAPI}
 
-	spamAnalysis := &dynamicSpamAnalysis{
+	spamDetector := &interactiveSpamDetector{
 		analyticsDataProvider: &remoteAnalyticsDataProvider{
 			analyticsAPI: analyticsAPI,
 		},
-		spamDetector: spamDetector,
+		spamDomainProvider: spamDomainProvider,
 	}
 
 	filterNameProvider := &spamFilterNameProvider{"Referrer Spam Block"}
@@ -64,7 +63,7 @@ func New(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector, spam
 	filterProvider := &remoteFilterProvider{
 		analyticsAPI: analyticsAPI,
 
-		spamRepository: spamRepository,
+		spamDomainProvider: spamDomainProvider,
 
 		filterNameProvider: filterNameProvider,
 		filterFactory:      filterFactory,
@@ -73,8 +72,12 @@ func New(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector, spam
 	return &SpamControl{
 		accountProvider: accountProvider,
 		filterProvider:  filterProvider,
-		spamAnalysis:    spamAnalysis,
-		spamRepository:  spamRepository,
+		spamDetector:    spamDetector,
+
+		spamDomainProvider: spamDomainProvider,
+
+		communitySpamRepository: communitySpamRepository,
+		privateSpamRepository:   privateSpamRepository,
 	}
 }
 
@@ -83,8 +86,13 @@ func New(analyticsAPI api.AnalyticsAPI, spamDetector detector.SpamDetector, spam
 type SpamControl struct {
 	accountProvider accountProvider
 	filterProvider  filterProvider
-	spamAnalysis    spamAnalysis
-	spamRepository  SpamDomainRepository
+	spamDetector    spamDetector
+
+	spamDomainProvider SpamDomainProvider
+
+	// repositories
+	communitySpamRepository *CommunitySpamDomainRepository
+	privateSpamRepository   *PrivateSpamDomainRepository
 }
 
 // Remove the referrer spam controls from the account with the given accountID.
@@ -112,61 +120,19 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 	return nil
 }
 
+// ListSpamDomains returns a list of all known spam domains
+func (spamControl *SpamControl) ListSpamDomains() ([]string, error) {
+	return spamControl.spamDomainProvider.GetSpamDomains()
+}
+
 // UpdateSpamDomains updates the referrer spam domain list.
 func (spamControl *SpamControl) UpdateSpamDomains() (UpdateResult, error) {
-	unchanged, added, removed, err := spamControl.spamRepository.UpdateSpamDomains()
+	unchanged, added, removed, err := spamControl.communitySpamRepository.UpdateSpamDomains()
 	if err != nil {
 		return UpdateResult{}, err
 	}
 
-	var domainUpdates []DomainUpdate
-
-	// unchanged
-	for _, domain := range unchanged {
-		domainUpdates = append(domainUpdates, DomainUpdate{
-			UpdateType: Unchanged,
-			Domainname: domain,
-		})
-	}
-
-	// added
-	for _, domain := range added {
-		domainUpdates = append(domainUpdates, DomainUpdate{
-			UpdateType: Added,
-			Domainname: domain,
-		})
-	}
-
-	// removed
-	for _, domain := range removed {
-		domainUpdates = append(domainUpdates, DomainUpdate{
-			UpdateType: Removed,
-			Domainname: domain,
-		})
-	}
-
-	// return an error if the list if empty
-	if len(domainUpdates) == 0 {
-		return UpdateResult{}, fmt.Errorf("Something is wrong. No domains received.")
-	}
-
-	// sort the list
-	SortDomainUpdateBy(domainUpdatesByName).Sort(domainUpdates)
-
-	return UpdateResult{
-		Statistics: DomainUpdateStatistics{
-			Unchanged: len(unchanged),
-			Added:     len(added),
-			Removed:   len(removed),
-			Total:     len(domainUpdates),
-		},
-		Domains: domainUpdates,
-	}, nil
-}
-
-// ListSpamDomains returns a list of all known spam domains
-func (spamControl *SpamControl) ListSpamDomains() ([]string, error) {
-	return spamControl.spamRepository.GetSpamDomains()
+	return createUpdateResultModel(unchanged, added, removed)
 }
 
 // DetectSpam checks the given account for referrer spam.
@@ -176,7 +142,33 @@ func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookB
 		return AnalysisResult{}, fmt.Errorf("The specified number of days to look back cannot be below 1")
 	}
 
-	return spamControl.spamAnalysis.GetSpamAnalysis(accountID, numberOfDaysToLookBack, 0.75)
+	// find new referrer spam domains
+	newSpamDomainNames, err := spamControl.spamDetector.DetectSpam(accountID, numberOfDaysToLookBack)
+	if err != nil {
+		return AnalysisResult{}, err
+	}
+
+	// assemble the viewmodel from the result
+	result := AnalysisResult{
+		AccountID: accountID,
+	}
+
+	for _, domainName := range newSpamDomainNames {
+
+		result.Domains = append(result.Domains, Domain{
+			DomainName: domainName,
+			IsSpam:     true,
+		})
+
+	}
+
+	// add the new domain names to the repository
+	addError := spamControl.privateSpamRepository.AddDomains(newSpamDomainNames)
+	if addError != nil {
+		return AnalysisResult{}, err
+	}
+
+	return result, nil
 }
 
 // GlobalStatus collects the current spam-control status of all accessible
@@ -190,7 +182,7 @@ func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 		return StateOverview{}, accountsError
 	}
 
-	knownSpamDomains, spamDomainsError := spamControl.spamRepository.GetSpamDomains()
+	knownSpamDomains, spamDomainsError := spamControl.spamDomainProvider.GetSpamDomains()
 	if spamDomainsError != nil {
 		return StateOverview{}, spamDomainsError
 	}
@@ -263,7 +255,7 @@ func (spamControl *SpamControl) Update(accountID string) error {
 
 		// remove obsolete filters
 		if filterStatus.Status() == status.Obsolete {
-			fmt.Printf("Removing filter %q\n", filterStatus.Filter().Name)
+			fmt.Printf("Removing filter %q"+NewLineSequence, filterStatus.Filter().Name)
 			removeError := spamControl.filterProvider.RemoveFilter(account.ID, filterStatus.Filter().ID)
 			if removeError != nil {
 				return removeError
@@ -274,7 +266,7 @@ func (spamControl *SpamControl) Update(accountID string) error {
 
 		// update outdated filters
 		if filterStatus.Status() == status.Outdated {
-			fmt.Printf("Updating filter %q\n", filterStatus.Filter().Name)
+			fmt.Printf("Updating filter %q"+NewLineSequence, filterStatus.Filter().Name)
 			_, updateError := spamControl.filterProvider.UpdateFilter(account.ID, filterStatus.Filter().ID, filterStatus.Filter())
 			if updateError != nil {
 				return updateError
@@ -285,7 +277,7 @@ func (spamControl *SpamControl) Update(accountID string) error {
 
 		// create new filters
 		if filterStatus.Status() == status.NotInstalled {
-			fmt.Printf("Creating filter %q\n", filterStatus.Filter().Name)
+			fmt.Printf("Creating filter %q"+NewLineSequence, filterStatus.Filter().Name)
 			_, createError := spamControl.filterProvider.CreateFilter(account.ID, filterStatus.Filter())
 			if createError != nil {
 				return createError
@@ -300,16 +292,50 @@ func (spamControl *SpamControl) Update(accountID string) error {
 	return nil
 }
 
-func getAverageProbability(spamDomains []SpamDomain) float64 {
-	if len(spamDomains) == 0 {
-		return 0.0
+// createUpdateResultModel creates an UpdateResult model from the given lists
+// of unchaged, added and removed spam domain names.
+func createUpdateResultModel(unchanged, added, removed []string) (UpdateResult, error) {
+	var domainUpdates []DomainUpdate
+
+	// unchanged
+	for _, domain := range unchanged {
+		domainUpdates = append(domainUpdates, DomainUpdate{
+			UpdateType: Unchanged,
+			Domainname: domain,
+		})
 	}
 
-	totalProbability := 0.0
-	for _, spamDomain := range spamDomains {
-		totalProbability += spamDomain.SpamProbability
+	// added
+	for _, domain := range added {
+		domainUpdates = append(domainUpdates, DomainUpdate{
+			UpdateType: Added,
+			Domainname: domain,
+		})
 	}
 
-	numberOfDomains := float64(len(spamDomains))
-	return totalProbability / numberOfDomains
+	// removed
+	for _, domain := range removed {
+		domainUpdates = append(domainUpdates, DomainUpdate{
+			UpdateType: Removed,
+			Domainname: domain,
+		})
+	}
+
+	// return an error if the list if empty
+	if len(domainUpdates) == 0 {
+		return UpdateResult{}, fmt.Errorf("Something is wrong. No domains received.")
+	}
+
+	// sort the list
+	SortDomainUpdateBy(domainUpdatesByName).Sort(domainUpdates)
+
+	return UpdateResult{
+		Statistics: DomainUpdateStatistics{
+			Unchanged: len(unchanged),
+			Added:     len(added),
+			Removed:   len(removed),
+			Total:     len(domainUpdates),
+		},
+		Domains: domainUpdates,
+	}, nil
 }

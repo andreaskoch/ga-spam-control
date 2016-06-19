@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreaskoch/ga-spam-control/api/apicredentials"
 	"github.com/etix/stoppableListener"
+	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
 )
 
@@ -41,6 +42,10 @@ func receiveAuthorizationCode(conf *oauth2.Config, listenAddress, route string) 
 	url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline)
 	fmt.Printf("Visit the URL for the auth dialog: %v", url)
 	fmt.Println()
+
+	// open the URL in the user's default browser
+	open.Run(url)
+
 	go func() {
 
 		listener, err := net.Listen("tcp", listenAddress)

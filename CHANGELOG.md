@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Add a roadmap to the README.md
 - Add "Support for manual segment creation" to the roadmap
+- Open the Google Analytics oAuth authorizatin URL in the users' default browser
+
+### Changed
+- Replaced the automatic machine-learning based referrer spam domain detection with a manual review process
 
 ### Fixed
 - The staticSpamDomains provider did not respect HTTP status codes.

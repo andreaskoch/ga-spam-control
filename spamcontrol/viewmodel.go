@@ -129,52 +129,52 @@ type AccountStatus struct {
 // AnalysisResult represents the current spam status
 // for a given analytics account.
 type AnalysisResult struct {
-	AccountID   string       `json:"accountId"`
-	SpamDomains []SpamDomain `json:"spamDomains"`
+	AccountID string   `json:"accountId"`
+	Domains   []Domain `json:"domains"`
 }
 
-// A SpamDomain model contains information about (referrer) spam domains.
-type SpamDomain struct {
+// A Domain model contains information about (referrer) spam domains.
+type Domain struct {
 	// DomainName defines contains the domain name of the spam domain (e.g. "rank-checker.online")
 	DomainName string `json:"domainName"`
 
-	// SpamProbability contains the spam probability for this domain.
-	SpamProbability float64 `json:"spamProbability"`
+	// IsSpam contains a flag indicating whether this domain is spam or not.
+	IsSpam bool `json:"isSpam"`
 }
 
-// spamDomainsByName can be used to sort spamDomains by name (ascending).
-func spamDomainsByName(spamDomain1, spamDomain2 SpamDomain) bool {
-	return spamDomain1.DomainName < spamDomain2.DomainName
+// referrerDomainsByName can be used to sort referrerDomains by name (ascending).
+func referrerDomainsByName(referrerDomain1, referrerDomain2 Domain) bool {
+	return referrerDomain1.DomainName < referrerDomain2.DomainName
 }
 
-// The SortSpamDomainsBy function sorts SpamDomain objects.
-type SortSpamDomainsBy func(spamDomain1, spamDomain2 SpamDomain) bool
+// The SortDomainsBy function sorts Domain objects.
+type SortDomainsBy func(referrerDomain1, referrerDomain2 Domain) bool
 
-// Sort the given SpamDomain objects.
-func (by SortSpamDomainsBy) Sort(spamDomains []SpamDomain) {
-	sorter := &spamDomainSorter{
-		spamDomains: spamDomains,
-		by:          by,
+// Sort the given Domain objects.
+func (by SortDomainsBy) Sort(referrerDomains []Domain) {
+	sorter := &referrerDomainSorter{
+		referrerDomains: referrerDomains,
+		by:              by,
 	}
 
 	sort.Sort(sorter)
 }
 
-type spamDomainSorter struct {
-	spamDomains []SpamDomain
-	by          SortSpamDomainsBy
+type referrerDomainSorter struct {
+	referrerDomains []Domain
+	by              SortDomainsBy
 }
 
-func (sorter *spamDomainSorter) Len() int {
-	return len(sorter.spamDomains)
+func (sorter *referrerDomainSorter) Len() int {
+	return len(sorter.referrerDomains)
 }
 
-func (sorter *spamDomainSorter) Swap(i, j int) {
-	sorter.spamDomains[i], sorter.spamDomains[j] = sorter.spamDomains[j], sorter.spamDomains[i]
+func (sorter *referrerDomainSorter) Swap(i, j int) {
+	sorter.referrerDomains[i], sorter.referrerDomains[j] = sorter.referrerDomains[j], sorter.referrerDomains[i]
 }
 
-func (sorter *spamDomainSorter) Less(i, j int) bool {
-	return sorter.by(sorter.spamDomains[i], sorter.spamDomains[j])
+func (sorter *referrerDomainSorter) Less(i, j int) bool {
+	return sorter.by(sorter.referrerDomains[i], sorter.referrerDomains[j])
 }
 
 // InstallationStatus can be used to represent the spam-control

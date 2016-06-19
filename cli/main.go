@@ -11,11 +11,38 @@ import (
 	"github.com/andreaskoch/ga-spam-control/cli/templates"
 	"github.com/andreaskoch/ga-spam-control/cli/token"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol/detector"
 	"github.com/mitchellh/go-homedir"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
+
+// configFolderName contains the name of the folder that
+// is used for storing credentials and other configuration files.
+const configFolderName = ".ga-spam-control"
+
+// tokenStoreFilePath contains the file path to the file which holds the oAuth
+// credentials for the Google Analytics API.
+var tokenStoreFilePath string
+
+// communitySpamListFilePath contains the file path to the file which stores
+// a local copy of the aggregated referrer spam lists maintained by the community.
+var communitySpamListFilePath string
+
+// personalSpamListFilePath contains the file path to the file which stores
+// your personal referrer spam list.
+var personalSpamListFilePath string
+
+func init() {
+	homeDirPath, err := homedir.Dir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot determine the current users home direcotry. Error: %s", err)
+		os.Exit(1)
+	}
+
+	tokenStoreFilePath = filepath.Join(homeDirPath, configFolderName, "credentials.json")
+	communitySpamListFilePath = filepath.Join(homeDirPath, configFolderName, "spam-domains", "community.txt")
+	personalSpamListFilePath = filepath.Join(homeDirPath, configFolderName, "spam-domains", "personal.txt")
+}
 
 func main() {
 	handleCommandlineArguments(os.Args[1:])
@@ -39,13 +66,13 @@ func handleCommandlineArguments(args []string) {
 
 	listSpamDomains := app.Command("list-spam-domains", "List all currently known spam domains")
 
-	updateSpamDomains := app.Command("update-spam-domains", "Update the spam domain list")
-	updateSpamDomainsQuiet := updateSpamDomains.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
+	updateSpamDomains := app.Command("update-spam-domains", fmt.Sprintf("Update your list of known referrer spam domains (%q)", communitySpamListFilePath))
+	updateSpamDomainsQuiet := updateSpamDomains.Flag("quiet", "Display results in a parsable format").Short('q').Bool()
 
-	findSpamDomains := app.Command("find-spam-domains", "Find new referrer spam domains in your analytics data")
+	findSpamDomains := app.Command("find-spam-domains", fmt.Sprintf("Find new referrer spam domains in your analytics data and write them to your private referrer spam list (%q)", personalSpamListFilePath))
 	findSpamDomainsAccountID := findSpamDomains.Arg("accountID", "Google Analytics account ID").Required().String()
-	findSpamDomainsNumberOfDays := findSpamDomains.Arg("days", "The number of days to look back").Default("3").Int()
-	findSpamDomainsQuiet := findSpamDomains.Flag("quiet", "Display the analyis results in a parsable format").Short('q').Bool()
+	findSpamDomainsNumberOfDays := findSpamDomains.Arg("days", "The number of days to look back").Default("90").Int()
+	findSpamDomainsQuiet := findSpamDomains.Flag("quiet", "Display results in a parsable format").Short('q').Bool()
 
 	switch kingpin.MustParse(app.Parse(args)) {
 
@@ -61,8 +88,6 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", statusError.Error())
 		}
 
-		os.Exit(0)
-
 	case update.FullCommand():
 		// Update filters
 		cli, err := newCLI()
@@ -74,8 +99,6 @@ func handleCommandlineArguments(args []string) {
 		if updateError != nil {
 			app.Fatalf("%s", updateError.Error())
 		}
-
-		os.Exit(0)
 
 	case remove.FullCommand():
 		// Remove spam control
@@ -89,8 +112,6 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", removeError.Error())
 		}
 
-		os.Exit(0)
-
 	case updateSpamDomains.FullCommand():
 		// update spam domains
 		cli, err := newCLI()
@@ -102,8 +123,6 @@ func handleCommandlineArguments(args []string) {
 		if updateSpamDomainsError != nil {
 			app.Fatalf("%s", updateSpamDomainsError.Error())
 		}
-
-		os.Exit(0)
 
 	case listSpamDomains.FullCommand():
 		// list spam domains
@@ -117,8 +136,6 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", findSpamDomainsError.Error())
 		}
 
-		os.Exit(0)
-
 	case findSpamDomains.FullCommand():
 		// find spam
 		cli, err := newCLI()
@@ -131,23 +148,13 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", findSpamDomainsError.Error())
 		}
 
-		os.Exit(0)
-
 	}
-
-	os.Exit(0)
 }
 
 // newCLI creates a new spam control instance.
 func newCLI() (*cli, error) {
 
 	// create a token store
-	homeDirPath, err := homedir.Dir()
-	if err != nil {
-		return nil, fmt.Errorf("Cannot determine the current users home direcotry. Error: %s", err)
-	}
-
-	tokenStoreFilePath := filepath.Join(homeDirPath, ".ga-spam-control", "credentials")
 	tokenStore := token.NewTokenStore(tokenStoreFilePath)
 
 	// create a new analytis API instance
@@ -158,14 +165,32 @@ func newCLI() (*cli, error) {
 		return nil, apiError
 	}
 
-	spamDetector := detector.New()
-	domainProviderFactory := spamcontrol.NewSpamDomainProviderFactory(analyticsAPI, spamDetector)
+	// community spam domain repository
+	remoteSpamDomainURLs := []string{
+		"https://raw.githubusercontent.com/ddofborg/analytics-ghost-spam-list/master/adwordsrobot.com-spam-list.txt",
+		"https://raw.githubusercontent.com/Stevie-Ray/apache-nginx-referral-spam-blacklist/master/generator/domains.txt",
+		"https://raw.githubusercontent.com/piwik/referrer-spam-blacklist/master/spammers.txt",
+	}
+	remoteProviders := getRemoteSpamDomainProviders(remoteSpamDomainURLs)
 
-	spamDomainRepositoryFilePath := filepath.Join(homeDirPath, ".ga-spam-control", "domains")
-	domainRepository := spamcontrol.NewSpamDomainRepository(spamDomainRepositoryFilePath, domainProviderFactory)
+	communitySpamListRepository := spamcontrol.NewCommunitySpamDomainRepository(communitySpamListFilePath, remoteProviders)
+
+	// personal spam domain repository
+	localProvider := spamcontrol.NewLocalSpamDomainProvider(personalSpamListFilePath)
+	privateSpamListRepository := spamcontrol.NewPrivateSpamDomainRepository(personalSpamListFilePath, localProvider)
+
+	// combined private and community spam domain repository
+	combinedSpamDomainProvider := spamcontrol.NewAggregateProvider([]spamcontrol.SpamDomainProvider{
+		communitySpamListRepository,
+		privateSpamListRepository,
+	})
 
 	// create a spam control instance
-	spamControl := spamcontrol.New(analyticsAPI, spamDetector, domainRepository)
+	spamControl := spamcontrol.New(
+		analyticsAPI,
+		combinedSpamDomainProvider,
+		communitySpamListRepository,
+		privateSpamListRepository)
 
 	return &cli{
 		spamControl: spamControl,
@@ -308,4 +333,12 @@ func (cli *cli) accountStatus(accountID string) error {
 	fmt.Fprintf(os.Stdout, "%s\n", accountStatus)
 
 	return nil
+}
+
+func getRemoteSpamDomainProviders(urls []string) []spamcontrol.SpamDomainProvider {
+	var providers []spamcontrol.SpamDomainProvider
+	for _, url := range urls {
+		providers = append(providers, spamcontrol.NewRemoteSpamDomainProvider(url))
+	}
+	return providers
 }
