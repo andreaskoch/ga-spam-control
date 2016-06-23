@@ -2,8 +2,10 @@
 
 Command-line utility for automating the fight against Google Analytics referral spam
 
-Google Analytics [referrer spam](https://en.wikipedia.org/wiki/Referer_spam) is pain.
-There are hundreds of known referrer spam domains and every other day a new one pops up. And the only way to keep the spammers from skewing your web analytics reports is to block these spam domain names one by one.
+Google Analytics [referrer spam](https://en.wikipedia.org/wiki/Referer_spam) is huge and never ending pain.
+There are hundreds of known referrer spam domains and every other day a new one pops up. And the only way to keep the spammers from skewing your web analytics reports is to their stupid domain names – one by one.
+
+![ga-spam-control logo](files/assets/ga-spam-control-logo-300x200.png)
 
 **ga-spam-control** is a small command-line utility that keeps your Google Analytics spam filters up-to-date, automatically.
 
