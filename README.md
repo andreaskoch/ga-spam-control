@@ -160,6 +160,7 @@ See [LICENSE](LICENSE) for the full license text.
 Ideally Google would just include a spam-protection into Google Analytics but until then here are some ideas for additional features and possible improvements:
 
 - Make remote spam domain providers configurable
+- Publish spam domain names that you found in your Google Analytics accounts back to the community lists.
 - Populate my own list of known referrer spam domains with the results from the `find-spam-domains` action.
   - Automatic daily upload from the ga-spam-control clients
   - Review of the additions by trusted community members or by a tool which checks the listed website
