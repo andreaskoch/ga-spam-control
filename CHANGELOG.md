@@ -6,7 +6,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ### Changed
-- Renamed the "show-status" action to "status"
+- Change the structure of the CLI actions
+  - Renamed the "show-status" action to "filters status"
+  - Renamed the "update-filters" action to "filters update"
+  - Renamed the "remove-filters" action to "filters remove"
+  - Renamed the "list-spam-domains" action to "domains list"
+  - Renamed the "find-spam-domains" action to "domains find"
 
 ### Added
 - Add a logo for ga-spam-control

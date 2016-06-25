@@ -29,90 +29,108 @@ The command line utility provides the following actions.
 
 In order to protect your Google Analytics account from spam **ga-spam-control** creates filters which blocks known referrer spam domains from your analytics reports. These are the commands that help you to review and update your spam filters:
 
-1. Action: **show-status**
-Display the spam-control status of all your accounts or for a specific account
-2. Action: **update-filters**
-Create or update the spam-control filters for a specific account
-3. Action: **remove-filters**
-Remove all spam-control filters from an account
+- **filters status** displays the spam-control status of all your accounts or for a specific account
+- **filters update** creates or updates the spam-control filters for a specific account
+- **filters remove** removes all previously created spam-control filters from an account
 
 **Referrer Spam Domains Actions**
 
 The basis for the spam filters is an up-to-date list of known referrer spam domains. And with these commands you can review and update the spam-domain lists:
 
-1. Action: **list-spam-domains**
-Print a list of all currently known referrer spam domains
-2. Action: **update-spam-domains**
-Update the list of referrer spam domain names.
-3. Action: **find-spam-domains**
-Manually review the last `n` days of analytics data and mark domain names as spam
+- **domains list** prints a list of all currently known referrer spam domains
+- **domains update** downloads the latest referrer spam domain name lists and updates your local list of known referrer spam domains
+- **domains find** allows you to manually review the last `n` days of analytics data and mark domain names as spam
 
 Which domains are currently considered spam is stored in the `~/.ga-spam-control/spam-domains/community.txt` and `~/.ga-spam-control/spam-domains/personal.txt`.
 
-## Usage
+## Using ga-spam-control
 
 ```bash
 ga-spam-control <command> [<args> ...]
 ```
 
-### Print help information
+### Help
+
+Print information about the available actions:
 
 ```bash
-ga-spam-control --help
+ga-spam-control help
 ```
 
-### Display spam-control status
-
-Display the current spam-control **show-status** for all accounts that you have access to:
+Print detailed help information about the different arguments and flags of a specific action:
 
 ```bash
-ga-spam-control show-status
+ga-spam-control help <actionname>
 ```
 
-Display the spam-control status in a parseable format:
-
-```bash
-ga-spam-control show-status --quiet
-```
-
-Display the current spam-control **status** for a specific Google Analytics account:
-
-```bash
-ga-spam-control show-status <accountID>
-```
-
-### Install or update spam-control filters
-
-**update** the spam-control filters for a specific Google Analytics account:
-
-```bash
-ga-spam-control update-filters <accountID>
-```
-
-### Uninstall spam-control filters
-
-**remove** the spam-control filters for a specific Google Analytics account:
-
-```bash
-ga-spam-control remove-filters <accountID>
-```
-
-### Find new referrer spam in your accounts
-
-The **find-spam-domains** displays referrer domain names from the last `n ` days of analytics data to you for review.
-
-```bash
-ga-spam-control find-spam-domains <accountID> <numberOfDaysToLookBack>
-```
-
-By default ga-spam-control will use the last 90 days of analytics data. But if you want to review less or more days you can specify the number of days yourself.
-
-**Authentication**
+### Authorizing ga-spam-control to access your Google Analytics accounts
 
 The first time you perform an action, you will be displayed an oAuth authorization dialog.
 If you permit the requested rights the authentication token will be stored in your home directory (`~/.ga-spam-control/credentials.json`).
 
 To sign out you can either delete the file or de-authorize the "Google Analytics Spam Control" app in your Google App Permissions at https://security.google.com/settings/security/permissions.
+
+### Get your spam-Control status
+
+Display the current spam-control **status** for all accounts that you have access to:
+
+```bash
+ga-spam-control filters status
+```
+
+Display the spam-control status in a parseable format:
+
+```bash
+ga-spam-control filters status --quiet
+```
+
+Display the current spam-control **status** for a specific Google Analytics account:
+
+```bash
+ga-spam-control filters status <accountID>
+```
+
+### Install or update filters
+
+Create or update the spam-control filters of a given Google Analytics account:
+
+```bash
+ga-spam-control filters update <accountID>
+```
+
+### Uninstall filters
+
+Remove the spam-control filters of a given Google Analytics account:
+
+```bash
+ga-spam-control filters remove <accountID>
+```
+
+### List all known spam domains
+
+Print a list of your known referrer spam domains names (community & personal):
+
+```bash
+ga-spam-control domains list
+```
+
+### Update your list of known spam domains
+
+Update your local community list of known referrer spam domain names:
+
+```bash
+ga-spam-control domains update
+```
+
+### Find new spam domains
+
+Find referrer spam domain names in your Google Analtics data. Review the hostnames of the last `n` days of one of your Google Analytics accounts and mark those which you consider spam. All marked domain names will be added to your personal referrer spam list:
+
+```bash
+ga-spam-control domains find <accountID> <numberOfDaysToLookBack>
+```
+
+By default ga-spam-control will use the last 90 days of analytics data. But if you want to review less or more days you can specify the number of days yourself.
 
 ## Installation
 
