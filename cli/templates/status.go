@@ -8,11 +8,11 @@ package templates
 var PrettyStatus = `Known spam domains: {{.KnownSpamDomains}}
 
 {{range .Accounts -}}
-{{printf "%s (%s)" .AccountName .AccountID | printf "%30s"}}: {{printf "%5s" .Status}} {{printf "%d/%d" .Status.UpToDateFilters .Status.TotalFilters | printf "%8s"}}
+{{printf "%s (%s)" .AccountName .AccountID | printf "%30s"}}: {{printf "%5s" .Status}} {{printf "%d/%d" .Status.DomainsCovered .Status.TotalDomains | printf "%8s"}}
 {{end}}`
 
 // QuietStatus contains a minimal template for
 // displaying the status of multiple analytics accounts.
 var QuietStatus = `{{range .Accounts -}}
-{{printf "%-10s" .AccountID}} {{.Status}}
+{{printf "%-10s" .AccountID}} {{printf "%5s" .Status}} {{printf "%d/%d" .Status.DomainsCovered .Status.TotalDomains | printf "%8s"}}
 {{end}}`

@@ -181,16 +181,16 @@ func (sorter *referrerDomainSorter) Less(i, j int) bool {
 // status of an account. It indicates how many of all available
 // filters are up-to-date.
 type InstallationStatus struct {
-	TotalFilters    int
-	UpToDateFilters int
+	TotalDomains   int
+	DomainsCovered int
 }
 
 // String returns a percentage string representing the spam-control status in percent (e.g. "72%").
 func (installationStatus InstallationStatus) String() string {
-	if installationStatus.TotalFilters == 0 || installationStatus.UpToDateFilters == 0 {
+	if installationStatus.TotalDomains == 0 || installationStatus.DomainsCovered == 0 {
 		return "0%"
 	}
 
-	percentage := installationStatus.UpToDateFilters * 100.0 / installationStatus.TotalFilters
+	percentage := installationStatus.DomainsCovered * 100.0 / installationStatus.TotalDomains
 	return fmt.Sprintf("%d%%", percentage)
 }

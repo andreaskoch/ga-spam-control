@@ -11,21 +11,6 @@ import (
 // FilterStatuses are a list of of FilterStatus objects.
 type FilterStatuses []FilterStatus
 
-// OverallStatus calculates an overall status for all status in this list.
-func (filterStatuses FilterStatuses) OverallStatus() InstallationStatus {
-	var numberOfFiltersWithStateUpToDate int
-	for _, filterStatus := range filterStatuses {
-		if filterStatus.Status() == status.UpToDate {
-			numberOfFiltersWithStateUpToDate++
-		}
-	}
-
-	return InstallationStatus{
-		TotalFilters:    len(filterStatuses),
-		UpToDateFilters: numberOfFiltersWithStateUpToDate,
-	}
-}
-
 // newFilterStatus creates a new FilterStatus instance.
 func newFilterStatus(filter api.Filter, status status.Status) FilterStatus {
 	return FilterStatus{filter, status}

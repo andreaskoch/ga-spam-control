@@ -1,6 +1,8 @@
 package spamcontrol
 
 import (
+	"fmt"
+
 	"github.com/andreaskoch/ga-spam-control/api"
 	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
@@ -14,17 +16,13 @@ type filterProvider interface {
 	// CreateFilter creates the given filter.
 	CreateFilter(accountID string, filter api.Filter) (api.Filter, error)
 
+	UpdateFilters(accountID string) error
+
 	// UpdateFilter updates the given filter.
 	UpdateFilter(accountID string, filterID string, filter api.Filter) (api.Filter, error)
 
 	// RemoveFilter deletes the given filter from the specified account.
 	RemoveFilter(accountID, filterID string) error
-
-	// GetAccountStatus returns the overall status for the given account ID.
-	GetAccountStatus(accountID string) (InstallationStatus, error)
-
-	// GetFilterStatuses returns the individual filter statuses for the given account.
-	GetFilterStatuses(accountID string) (FilterStatuses, error)
 }
 
 // A remoteFilterProvider offers CRUD operations for analytics filters
@@ -66,6 +64,59 @@ func (filterProvider remoteFilterProvider) CreateFilter(accountID string, filter
 	return filterProvider.analyticsAPI.CreateFilter(accountID, filter)
 }
 
+// UpdateFilters updates the given filter.
+func (filterProvider remoteFilterProvider) UpdateFilters(accountID string) error {
+	filterStatuses, filterStatusError := filterProvider.GetFilterStatuses(accountID)
+	if filterStatusError != nil {
+		return filterStatusError
+	}
+
+	for _, filterStatus := range filterStatuses {
+
+		// ignore up-to-date filters
+		if filterStatus.Status() == status.UpToDate {
+			continue
+		}
+
+		// remove obsolete filters
+		if filterStatus.Status() == status.Obsolete {
+			fmt.Printf("Removing filter %q"+NewLineSequence, filterStatus.Filter().Name)
+			removeError := filterProvider.RemoveFilter(accountID, filterStatus.Filter().ID)
+			if removeError != nil {
+				return removeError
+			}
+
+			continue
+		}
+
+		// update outdated filters
+		if filterStatus.Status() == status.Outdated {
+			fmt.Printf("Updating filter %q"+NewLineSequence, filterStatus.Filter().Name)
+			_, updateError := filterProvider.UpdateFilter(accountID, filterStatus.Filter().ID, filterStatus.Filter())
+			if updateError != nil {
+				return updateError
+			}
+
+			continue
+		}
+
+		// create new filters
+		if filterStatus.Status() == status.NotInstalled {
+			fmt.Printf("Creating filter %q"+NewLineSequence, filterStatus.Filter().Name)
+			_, createError := filterProvider.CreateFilter(accountID, filterStatus.Filter())
+			if createError != nil {
+				return createError
+			}
+
+			continue
+		}
+
+		return fmt.Errorf("Cannot update filter %q. Status %q cannot be handled.", filterStatus.Filter().Name, filterStatus.Status())
+	}
+
+	return nil
+}
+
 // UpdateFilter updates the given filter.
 func (filterProvider remoteFilterProvider) UpdateFilter(accountID string, filterID string, filter api.Filter) (api.Filter, error) {
 	return filterProvider.analyticsAPI.UpdateFilter(accountID, filterID, filter)
@@ -74,17 +125,6 @@ func (filterProvider remoteFilterProvider) UpdateFilter(accountID string, filter
 // RemoveFilter deletes the given filter from the specified account.
 func (filterProvider remoteFilterProvider) RemoveFilter(accountID, filterID string) error {
 	return filterProvider.analyticsAPI.RemoveFilter(accountID, filterID)
-}
-
-// GetAccountStatus returns the status of for the given account ID.
-func (filterProvider remoteFilterProvider) GetAccountStatus(accountID string) (InstallationStatus, error) {
-
-	filterStatuses, filterStatusError := filterProvider.GetFilterStatuses(accountID)
-	if filterStatusError != nil {
-		return InstallationStatus{}, filterStatusError
-	}
-
-	return filterStatuses.OverallStatus(), nil
 }
 
 // GetFilterStatuses returns the individual filter statuses for the given account.
