@@ -112,6 +112,7 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 	}
 
 	for _, filter := range filters {
+		fmt.Printf("Removing filter %q"+NewLineSequence, filter.Name)
 		if err := spamControl.filterProvider.RemoveFilter(account.ID, filter.ID); err != nil {
 			return err
 		}

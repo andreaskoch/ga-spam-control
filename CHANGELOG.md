@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   - Renamed the "list-spam-domains" action to "domains list"
   - Renamed the "find-spam-domains" action to "domains find"
 - The spam-protection status calculation is now based on the number of spam domain names that are blocked by the existing filters - opposed to the number of filters which are up-to-date.
+- Print status updates when removing the spam-filters from an account
 
 ### Added
 - Add a logo for ga-spam-control
