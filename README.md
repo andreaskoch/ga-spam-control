@@ -68,6 +68,8 @@ ga-spam-control help <actionname>
 The first time you perform an action, you will be displayed an oAuth authorization dialog.
 If you permit the requested rights the authentication token will be stored in your home directory (`~/.ga-spam-control/credentials.json`).
 
+![Animation: Authorizing ga-spam-control to access your Google Analytics accounts](files/usage/02-authorize.gif)
+
 To sign out you can either delete the file or de-authorize the "Google Analytics Spam Control" app in your Google App Permissions at https://security.google.com/settings/security/permissions.
 
 ### Get your spam-Control status
@@ -90,6 +92,8 @@ Display the current spam-control **status** for a specific Google Analytics acco
 ga-spam-control filters status <accountID>
 ```
 
+![Animation: Displaying your current spam-control status with ga-spam-control filters status](files/usage/03-filters-status.gif)
+
 ### Install or update filters
 
 Create or update the spam-control filters of a given Google Analytics account:
@@ -97,6 +101,8 @@ Create or update the spam-control filters of a given Google Analytics account:
 ```bash
 ga-spam-control filters update <accountID>
 ```
+
+![Animation: Installing or updating spam-control filters using ga-spam-control filters update](files/usage/04-filters-update.gif)
 
 ### Uninstall filters
 
@@ -106,6 +112,8 @@ Remove the spam-control filters of a given Google Analytics account:
 ga-spam-control filters remove <accountID>
 ```
 
+This will simply remove all filters that ga-spam-control created earlier.
+
 ### List all known spam domains
 
 Print a list of your known referrer spam domains names (community & personal):
@@ -113,6 +121,8 @@ Print a list of your known referrer spam domains names (community & personal):
 ```bash
 ga-spam-control domains list
 ```
+
+![Animation: Displaying a list of all known referrer spam domain names with ga-spam-control domains list](files/usage/05-domains-list.gif)
 
 ### Update your list of known spam domains
 
@@ -122,6 +132,8 @@ Update your local community list of known referrer spam domain names:
 ga-spam-control domains update
 ```
 
+![Animation: Downloading the latest referrer spam domain names with ga-spam-control domains update](files/usage/06-domains-update.gif)
+
 ### Find new spam domains
 
 Find referrer spam domain names in your Google Analtics data. Review the hostnames of the last `n` days of one of your Google Analytics accounts and mark those which you consider spam. All marked domain names will be added to your personal referrer spam list:
@@ -129,6 +141,8 @@ Find referrer spam domain names in your Google Analtics data. Review the hostnam
 ```bash
 ga-spam-control domains find <accountID> <numberOfDaysToLookBack>
 ```
+
+![Animation: Locating new referrer spam domain names in your Google Analytics reports with ga-spam-control domains find](files/usage/07-domains-find.gif)
 
 By default ga-spam-control will use the last 90 days of analytics data. But if you want to review less or more days you can specify the number of days yourself.
 

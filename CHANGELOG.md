@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Add a logo for ga-spam-control
+- Add animations/screencasts that illustrate the available actions and usage scenarios for ga-spam-control
 
 ## v0.5.0
 
