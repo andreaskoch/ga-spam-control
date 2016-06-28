@@ -52,67 +52,77 @@ func main() {
 // and performs the selected action.
 func handleCommandlineArguments(args []string) {
 	app := kingpin.New("ga-spam-control", "Command-line utility for keeping your Google Analytics referrer spam filters up-to-date")
-	app.Version("0.5.0")
+	app.Version("0.6.0")
 
-	status := app.Command("show-status", "Display the spam-control status of your accounts")
-	statusAccountID := status.Arg("accountID", "Google Analytics account ID").String()
-	statusQuiet := status.Flag("quiet", "Display spam-protection status in a parsable format").Short('q').Bool()
+	// filters
+	filtersCommand := app.Command("filters", "Manage spam filters")
 
-	update := app.Command("update-filters", "Update the spam filters for the given account")
-	updateAccountID := update.Arg("accountID", "Google Analytics account ID").Required().String()
+	statusCommand := filtersCommand.Command("status", "Show the spam-control status of your accounts")
+	statusCommandAccountID := statusCommand.Arg("accountID", "Google Analytics account ID").String()
+	statusCommandQuiet := statusCommand.Flag("quiet", "Display spam-protection status in a parsable format").Short('q').Bool()
 
-	remove := app.Command("remove-filters", "Remove all spam filters from an account")
-	removeAccountID := remove.Arg("accountID", "Google Analytics account ID").Required().String()
+	updateFiltersCommand := filtersCommand.Command("update", "Update the spam filters for the given account")
+	updateFiltersAccountID := updateFiltersCommand.Arg("accountID", "Google Analytics account ID").Required().String()
 
-	listSpamDomains := app.Command("list-spam-domains", "List all currently known spam domains")
+	removeFiltersCommand := filtersCommand.Command("remove", "Remove all spam filters from an account")
+	removeFiltersAccountID := removeFiltersCommand.Arg("accountID", "Google Analytics account ID").Required().String()
 
-	updateSpamDomains := app.Command("update-spam-domains", fmt.Sprintf("Update your list of known referrer spam domains (%q)", communitySpamListFilePath))
-	updateSpamDomainsQuiet := updateSpamDomains.Flag("quiet", "Display results in a parsable format").Short('q').Bool()
+	// domains
+	domainsCommand := app.Command("domains", "Manage spam domains")
+	listDomainsCommand := domainsCommand.Command("list", "List all currently known spam domains")
 
-	findSpamDomains := app.Command("find-spam-domains", fmt.Sprintf("Find new referrer spam domains in your analytics data and write them to your private referrer spam list (%q)", personalSpamListFilePath))
+	updateSpamDomainsCommand := domainsCommand.Command("update", fmt.Sprintf("Update your list of known referrer spam domains (%q)", communitySpamListFilePath))
+	updateSpamDomainsQuiet := updateSpamDomainsCommand.Flag("quiet", "Display results in a parsable format").Short('q').Bool()
+
+	findSpamDomains := domainsCommand.Command("find", fmt.Sprintf("Find new referrer spam domains in your analytics data and write them to your private referrer spam list (%q)", personalSpamListFilePath))
 	findSpamDomainsAccountID := findSpamDomains.Arg("accountID", "Google Analytics account ID").Required().String()
 	findSpamDomainsNumberOfDays := findSpamDomains.Arg("days", "The number of days to look back").Default("90").Int()
 	findSpamDomainsQuiet := findSpamDomains.Flag("quiet", "Display results in a parsable format").Short('q').Bool()
 
-	switch kingpin.MustParse(app.Parse(args)) {
+	command, err := app.Parse(args)
+	if err != nil {
+		app.Fatalf("%s", err.Error())
+	}
 
-	case status.FullCommand():
+	switch command {
+
+	case statusCommand.FullCommand():
 		// Display status
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
 
-		statusError := cli.Status(*statusAccountID, *statusQuiet)
+		statusError := cli.Status(*statusCommandAccountID, *statusCommandQuiet)
 		if statusError != nil {
 			app.Fatalf("%s", statusError.Error())
 		}
 
-	case update.FullCommand():
+	case updateFiltersCommand.FullCommand():
 		// Update filters
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
 
-		updateError := cli.Update(*updateAccountID)
+		updateError := cli.Update(*updateFiltersAccountID)
 		if updateError != nil {
 			app.Fatalf("%s", updateError.Error())
 		}
 
-	case remove.FullCommand():
+	case removeFiltersCommand.FullCommand():
 		// Remove spam control
 		cli, err := newCLI()
 		if err != nil {
 			app.Fatalf("%s", err.Error())
 		}
 
-		removeError := cli.Remove(*removeAccountID)
+		removeError := cli.Remove(*removeFiltersAccountID)
 		if removeError != nil {
 			app.Fatalf("%s", removeError.Error())
 		}
 
-	case updateSpamDomains.FullCommand():
+	case updateSpamDomainsCommand.FullCommand():
 		// update spam domains
 		cli, err := newCLI()
 		if err != nil {
@@ -124,7 +134,7 @@ func handleCommandlineArguments(args []string) {
 			app.Fatalf("%s", updateSpamDomainsError.Error())
 		}
 
-	case listSpamDomains.FullCommand():
+	case listDomainsCommand.FullCommand():
 		// list spam domains
 		cli, err := newCLI()
 		if err != nil {

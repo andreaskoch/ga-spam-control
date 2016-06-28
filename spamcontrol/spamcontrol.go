@@ -3,9 +3,9 @@ package spamcontrol
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/andreaskoch/ga-spam-control/api"
-	"github.com/andreaskoch/ga-spam-control/spamcontrol/status"
 )
 
 // The SpamController interface provides functions for displaying, updating and removing referrer spam controls.
@@ -112,6 +112,7 @@ func (spamControl *SpamControl) Remove(accountID string) error {
 	}
 
 	for _, filter := range filters {
+		fmt.Printf("Removing filter %q"+NewLineSequence, filter.Name)
 		if err := spamControl.filterProvider.RemoveFilter(account.ID, filter.ID); err != nil {
 			return err
 		}
@@ -138,12 +139,19 @@ func (spamControl *SpamControl) UpdateSpamDomains() (UpdateResult, error) {
 // DetectSpam checks the given account for referrer spam.
 // Returns an error if the analysis failed.
 func (spamControl *SpamControl) DetectSpam(accountID string, numberOfDaysToLookBack int) (AnalysisResult, error) {
+
+	// get the requested account
+	account, accountError := spamControl.accountProvider.GetAccount(accountID)
+	if accountError != nil {
+		return AnalysisResult{}, accountError
+	}
+
 	if numberOfDaysToLookBack < 1 {
 		return AnalysisResult{}, fmt.Errorf("The specified number of days to look back cannot be below 1")
 	}
 
 	// find new referrer spam domains
-	newSpamDomainNames, err := spamControl.spamDetector.DetectSpam(accountID, numberOfDaysToLookBack)
+	newSpamDomainNames, err := spamControl.spamDetector.DetectSpam(account.ID, numberOfDaysToLookBack)
 	if err != nil {
 		return AnalysisResult{}, err
 	}
@@ -195,7 +203,7 @@ func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 	// get the status for each account
 	for _, account := range accounts {
 
-		accountStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
+		accountStatus, accountStatusError := spamControl.AccountStatus(account.ID)
 		if accountStatusError != nil {
 			return StateOverview{}, accountStatusError
 		}
@@ -216,19 +224,44 @@ func (spamControl *SpamControl) GlobalStatus() (StateOverview, error) {
 // with the given account ID. Returns an error if the status cannot be
 // determined.
 func (spamControl *SpamControl) AccountStatus(accountID string) (InstallationStatus, error) {
+
 	// get the requested account
 	account, accountError := spamControl.accountProvider.GetAccount(accountID)
 	if accountError != nil {
 		return InstallationStatus{}, accountError
 	}
 
-	// get the accounts' status
-	installationStatus, accountStatusError := spamControl.filterProvider.GetAccountStatus(account.ID)
-	if accountStatusError != nil {
-		return InstallationStatus{}, accountStatusError
+	// get the existing filters
+	existingFilters, existingFilterError := spamControl.filterProvider.GetExistingFilters(account.ID)
+	if existingFilterError != nil {
+		return InstallationStatus{}, existingFilterError
 	}
 
-	return installationStatus, nil
+	// get the latest referrer spam domain names
+	domainNames, spamDomainProviderError := spamControl.spamDomainProvider.GetSpamDomains()
+	if spamDomainProviderError != nil {
+		return InstallationStatus{}, spamDomainProviderError
+	}
+
+	// test the filters
+	domainsCovered := make(map[string]int)
+	for _, filter := range existingFilters {
+		expressionRegex := regexp.MustCompile(filter.ExcludeDetails.ExpressionValue)
+
+		for _, domain := range domainNames {
+			if isMatch := expressionRegex.MatchString(domain); !isMatch {
+				continue
+			}
+
+			domainsCovered[domain]++
+		}
+
+	}
+
+	return InstallationStatus{
+		TotalDomains:   len(domainNames),
+		DomainsCovered: len(domainsCovered),
+	}, nil
 }
 
 // Update the referrer spam controls for the account with the given accountID.
@@ -241,55 +274,8 @@ func (spamControl *SpamControl) Update(accountID string) error {
 		return accountError
 	}
 
-	filterStatuses, filterStatusError := spamControl.filterProvider.GetFilterStatuses(account.ID)
-	if filterStatusError != nil {
-		return filterStatusError
-	}
+	return spamControl.filterProvider.UpdateFilters(account.ID)
 
-	for _, filterStatus := range filterStatuses {
-
-		// ignore up-to-date filters
-		if filterStatus.Status() == status.UpToDate {
-			continue
-		}
-
-		// remove obsolete filters
-		if filterStatus.Status() == status.Obsolete {
-			fmt.Printf("Removing filter %q"+NewLineSequence, filterStatus.Filter().Name)
-			removeError := spamControl.filterProvider.RemoveFilter(account.ID, filterStatus.Filter().ID)
-			if removeError != nil {
-				return removeError
-			}
-
-			continue
-		}
-
-		// update outdated filters
-		if filterStatus.Status() == status.Outdated {
-			fmt.Printf("Updating filter %q"+NewLineSequence, filterStatus.Filter().Name)
-			_, updateError := spamControl.filterProvider.UpdateFilter(account.ID, filterStatus.Filter().ID, filterStatus.Filter())
-			if updateError != nil {
-				return updateError
-			}
-
-			continue
-		}
-
-		// create new filters
-		if filterStatus.Status() == status.NotInstalled {
-			fmt.Printf("Creating filter %q"+NewLineSequence, filterStatus.Filter().Name)
-			_, createError := spamControl.filterProvider.CreateFilter(account.ID, filterStatus.Filter())
-			if createError != nil {
-				return createError
-			}
-
-			continue
-		}
-
-		return fmt.Errorf("Cannot update filter %q. Status %q cannot be handled.", filterStatus.Filter().Name, filterStatus.Status())
-	}
-
-	return nil
 }
 
 // createUpdateResultModel creates an UpdateResult model from the given lists
@@ -323,7 +309,7 @@ func createUpdateResultModel(unchanged, added, removed []string) (UpdateResult, 
 
 	// return an error if the list if empty
 	if len(domainUpdates) == 0 {
-		return UpdateResult{}, fmt.Errorf("Something is wrong. No domains received.")
+		return UpdateResult{}, fmt.Errorf("No domains received.")
 	}
 
 	// sort the list

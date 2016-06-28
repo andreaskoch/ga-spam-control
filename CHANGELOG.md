@@ -3,7 +3,23 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## v0.6.0
+
+### Changed
+- Change the structure of the CLI actions
+  - Renamed the "show-status" action to "filters status"
+  - Renamed the "update-filters" action to "filters update"
+  - Renamed the "remove-filters" action to "filters remove"
+  - Renamed the "list-spam-domains" action to "domains list"
+  - Renamed the "find-spam-domains" action to "domains find"
+- The spam-protection status calculation is now based on the number of spam domain names that are blocked by the existing filters - opposed to the number of filters which are up-to-date.
+- Print status updates when removing the spam-filters from an account
+
+### Added
+- Add a logo for ga-spam-control
+- Add animations/screencasts that illustrate the available actions and usage scenarios for ga-spam-control
+
+## v0.5.0
 
 ### Added
 - Add a roadmap to the README.md
